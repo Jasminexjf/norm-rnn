@@ -131,10 +131,12 @@ class NormalizedLSTM(LSTM):
         super(NormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
 
         # input-to-hidden batch-normalization
-        self.i_norm = BatchNormalization(output_size)
-        self.f_norm = BatchNormalization(output_size)
-        self.c_norm = BatchNormalization(output_size)
-        self.o_norm = BatchNormalization(output_size)
+        # (input is dimshuffled, resulting in batch-norm being
+        # applied to (time_steps, batch_size, layer_size))
+        self.i_norm = BatchNormalization(output_size, norm_axis)
+        self.f_norm = BatchNormalization(output_size, norm_axis)
+        self.c_norm = BatchNormalization(output_size, norm_axis)
+        self.o_norm = BatchNormalization(output_size, norm_axis)
 
         def is_matrix(p):
             return p.ndim == 2
@@ -173,11 +175,12 @@ class NonGateNormalizedLSTM(LSTM):
     # combine this with normalized lstm by adding norm_gates arg to __init__
 
     def __init__(self, input_size, output_size, activation=T.tanh,
-                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
+                 inner_activation=T.nnet.softmax, weight_init=Uniform(),
+                 norm_axis=1):
         super(NonGateNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
 
         # input-to-hidden batch-normalization
-        self.c_norm = BatchNormalization(output_size)
+        self.c_norm = BatchNormalization(output_size, norm_axis)
 
         # remove non-gate bias
         self.params.pop(5)
@@ -212,11 +215,13 @@ class NonGateNormalizedLSTM(LSTM):
 class HiddenNormalizedLSTM(LSTM):
 
     def __init__(self, input_size, output_size, activation=T.tanh,
-                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
+                 inner_activation=T.nnet.softmax, weight_init=Uniform(),
+                 norm_axis=1):
         super(HiddenNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
 
         # hidden-to-hidden batch-normalization
-        self.h_norm = BatchNormalization(output_size)
+        # need to change this to have a norm for each gate
+        self.h_norm = BatchNormalization(output_size, norm_axis)
 
         # add batch-norm params
         self.params.extend(self.h_norm.params)
@@ -238,11 +243,12 @@ class HiddenNormalizedLSTM(LSTM):
 class NonGateHiddenNormalizedLSTM(LSTM):
 
     def __init__(self, input_size, output_size, activation=T.tanh,
-                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
+                 inner_activation=T.nnet.softmax, weight_init=Uniform(),
+                 norm_axis=1):
         super(NonGateHiddenNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
 
         # hidden-to-hidden batch-normalization
-        self.h_norm = BatchNormalization(output_size)
+        self.h_norm = BatchNormalization(output_size, norm_axis)
 
         # add batch-norm params
         self.params.extend(self.h_norm.params)
@@ -264,11 +270,12 @@ class NonGateHiddenNormalizedLSTM(LSTM):
 class PreActNormalizedLSTM(LSTM):
 
     def __init__(self, input_size, output_size, activation=T.tanh,
-                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
-        super(HiddenNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+                 inner_activation=T.nnet.softmax, weight_init=Uniform(),
+                 norm_axis=1):
+        super(PreActNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
 
         # pre-activation batch-normalization
-        self.norm = BatchNormalization(output_size)
+        self.norm = BatchNormalization(output_size, norm_axis)
 
         # add batch-norm params
         self.params.extend(self.norm.params)
@@ -283,5 +290,32 @@ class PreActNormalizedLSTM(LSTM):
         f_t = self.inner_activation(self.norm(xf_t + T.dot(h_tm1, u_f)))
         c_t = f_t * c_tm1 + i_t * self.activation(self.norm(xc_t + T.dot(h_tm1, u_c)))
         o_t = self.inner_activation(self.norm(xo_t + T.dot(h_tm1, u_o)))
+        h_t = o_t * self.activation(c_t)
+        return h_t, c_t
+
+
+class NonGatePreActNormalizedLSTM(LSTM):
+
+    def __init__(self, input_size, output_size, activation=T.tanh,
+                 inner_activation=T.nnet.softmax, weight_init=Uniform(),
+                 norm_axis=1):
+        super(NonGatePreActNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+
+        # pre-activation batch-normalization
+        self.norm = BatchNormalization(output_size, norm_axis)
+
+        # add batch-norm params
+        self.params.extend(self.norm.params)
+
+    def _step(self,
+        xi_t, xf_t, xo_t, xc_t,
+        h_tm1, c_tm1,
+        u_i, u_f, u_o, u_c):
+
+        # apply batch_norm to hidden-to-hidden dot product
+        i_t = self.inner_activation(xi_t + T.dot(h_tm1, u_i))
+        f_t = self.inner_activation(xf_t + T.dot(h_tm1, u_f))
+        c_t = f_t * c_tm1 + i_t * self.activation(self.norm(xc_t + T.dot(h_tm1, u_c)))
+        o_t = self.inner_activation(xo_t + T.dot(h_tm1, u_o))
         h_t = o_t * self.activation(c_t)
         return h_t, c_t
