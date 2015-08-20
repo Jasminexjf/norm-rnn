@@ -41,6 +41,13 @@ models = {
         NormalizedLSTM(9998, 200),
         NormalizedLSTM(200, 200),
         Linear(200, 9998)
+    ]),
+
+    'Input-to-hidden non-gate batch normalized LSTM':
+    List([
+        NonGateNormalizedLSTM(9998, 200),
+        NonGateNormalizedLSTM(200, 200),
+        Linear(200, 9998)
     ])
 }
 

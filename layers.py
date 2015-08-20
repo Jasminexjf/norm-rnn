@@ -129,6 +129,47 @@ class NormalizedLSTM(LSTM):
         return outputs.dimshuffle((1, 0, 2))
 
 
+class NonGateNormalizedLSTM(LSTM):
+
+    # combine this with normalized lstm by adding norm_gates arg to __init__
+
+    def __init__(self, input_size, output_size, activation=T.tanh,
+                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
+        super(NonGateNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+
+        # input-to-hidden batch-normalization
+        self.c_norm = BatchNormalization(output_size)
+
+        # remove non-gate bias
+        self.params.pop(5)
+
+        # add non-gate batch-norm params
+        self.params.extend(self.c_norm.params)
+
+    def __call__(self, x):
+        x = x.dimshuffle((1, 0, 2))
+
+        # normal LSTM gate transition
+        xi = T.dot(x, self.W_i) + self.b_i
+        xf = T.dot(x, self.W_f) + self.b_f
+        xo = T.dot(x, self.W_o) + self.b_o
+
+        # normalize non-gate transition
+        xc = self.c_norm(T.dot(x, self.W_c))
+
+        [outputs, memories], updates = theano.scan(
+            self._step,
+            sequences=[xi, xf, xo, xc],
+            outputs_info=[
+                T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1),
+                T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
+            ],
+            non_sequences=[self.U_i, self.U_f, self.U_o, self.U_c],
+        )
+
+        return outputs.dimshuffle((1, 0, 2))
+
+
 class BatchNormalization():
 
     def __init__(self, input_size, epsilon=1e-6):
