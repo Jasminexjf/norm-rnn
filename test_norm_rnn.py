@@ -54,17 +54,32 @@ def test_batch_norm():
         f = theano.function([x], BatchNormalization(input_size, axis)(x))
 
         x = np.ones((batch_size, time_steps, input_size))
-        assert f(x).shape == (batch_size, time_steps, layer_size)
+        assert f(x).shape == (batch_size, time_steps, input_size)
 
 
-def test_normalized_lstm():
-    from layers import NormalizedLSTM
+def test_norm_layers():
+    from layers import NormalizedLSTM, HiddenNormalizedLSTM
+    from layers import NonGateNormalizedLSTM, NonGateHiddenNormalizedLSTM
+    from layers import PreActNormalizedLSTM, NonGatePreActNormalizedLSTM
 
-    x = T.tensor3()
-    f = theano.function([x], NormalizedLSTM(input_size, layer_size)(x))
+    for layer in [NormalizedLSTM, HiddenNormalizedLSTM,
+                  NonGateNormalizedLSTM, NonGateHiddenNormalizedLSTM,
+                  PreActNormalizedLSTM, NonGatePreActNormalizedLSTM]:
 
-    x = np.ones((batch_size, time_steps, input_size))
-    assert f(x).shape == (batch_size, time_steps, layer_size)
+        for axis in [0, 1]:
+            x = T.tensor3()
+            f = theano.function([x], layer(input_size, layer_size, norm_axis=axis)(x))
+
+            x = np.ones((batch_size, time_steps, input_size))
+            assert f(x).shape == (batch_size, time_steps, layer_size)
 
 
-test_batch_norm()
+import sys
+import inspect
+
+# run tests
+# (but... but why not unittest?)
+#[test() for test in inspect.getmembers(sys.modules[__name__], inspect.isfunction)]
+
+
+test_norm_layers()
