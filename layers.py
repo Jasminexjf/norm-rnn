@@ -13,6 +13,20 @@ class Uniform(object):
             np.random.uniform(-self.scale, self.scale, shape), dtype=np.float32)
 
 
+class Linear(object):
+
+    def __init__(self, input_size, output_size, activation=Softmax(),
+                 weight_init=Uniform()):
+        self.W = theano.shared(weight_init((input_size, output_size)))
+        self.b = theano.shared(weight_init(output_size))
+        self.params = [self.W, self.b]
+
+        self.activation = activation
+
+    def __call__(self, x):
+        return self.activation(T.dot(x, self.W) + self.b)
+
+
 class LSTM(object):
 
     # stripped down LSTM from Keras
@@ -83,6 +97,23 @@ class LSTM(object):
 
     def _alloc_zeros_matrix(self, *dims):
         return T.alloc(np.cast[theano.config.floatX](0.), *dims)
+
+
+class BatchNormalization():
+
+    def __init__(self, input_size, epsilon=1e-6):
+        self.gamma = theano.shared(np.asarray(np.ones(input_size), dtype=np.float32))
+        self.beta = theano.shared(np.asarray(np.zeros(input_size), dtype=np.float32))
+        self.params = [self.gamma, self.beta]
+
+        self.epsilon = epsilon
+
+    def __call__(self, x):
+        # axis 1 is batch since x is dimshuffled in LSTM
+        m = x.mean(axis=1, keepdims=True)
+        std = x.std(axis=1, keepdims=True)
+        x = (x - m) / (std + self.epsilon)
+        return self.gamma * x + self.beta
 
 
 class NormalizedLSTM(LSTM):
@@ -170,40 +201,59 @@ class NonGateNormalizedLSTM(LSTM):
         return outputs.dimshuffle((1, 0, 2))
 
 
-class BatchNormalization():
+class HiddenNormalizedLSTM(LSTM):
 
-    def __init__(self, input_size, epsilon=1e-6):
-        self.gamma = theano.shared(np.asarray(np.ones(input_size), dtype=np.float32))
-        self.beta = theano.shared(np.asarray(np.zeros(input_size), dtype=np.float32))
-        self.params = [self.gamma, self.beta]
+    def __init__(self, input_size, output_size, activation=T.tanh,
+                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
+        super(HiddenNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
 
-        self.epsilon = epsilon
+        # hidden-to-hidden batch-normalization
+        self.h_norm = BatchNormalization(output_size)
 
-    def __call__(self, x):
-        # axis 1 is batch since x is dimshuffled in LSTM
-        m = x.mean(axis=1, keepdims=True)
-        std = x.std(axis=1, keepdims=True)
-        x = (x - m) / (std + self.epsilon)
-        return self.gamma * x + self.beta
+        # add batch-norm params
+        self.params.extend(self.h_norm.params)
+
+    def _step(self,
+        xi_t, xf_t, xo_t, xc_t,
+        h_tm1, c_tm1,
+        u_i, u_f, u_o, u_c):
+
+        # apply batch_norm to hidden-to-hidden dot product
+        i_t = self.inner_activation(xi_t + self.h_norm(T.dot(h_tm1, u_i)))
+        f_t = self.inner_activation(xf_t + self.h_norm(T.dot(h_tm1, u_f)))
+        c_t = f_t * c_tm1 + i_t * self.activation(xc_t + self.h_norm(T.dot(h_tm1, u_c)))
+        o_t = self.inner_activation(xo_t + self.h_norm(T.dot(h_tm1, u_o)))
+        h_t = o_t * self.activation(c_t)
+        return h_t, c_t
+
+
+class NonGateHiddenNormalizedLSTM(LSTM):
+
+    def __init__(self, input_size, output_size, activation=T.tanh,
+                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
+        super(NonGateHiddenNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+
+        # hidden-to-hidden batch-normalization
+        self.h_norm = BatchNormalization(output_size)
+
+        # add batch-norm params
+        self.params.extend(self.h_norm.params)
+
+    def _step(self,
+        xi_t, xf_t, xo_t, xc_t,
+        h_tm1, c_tm1,
+        u_i, u_f, u_o, u_c):
+
+        # apply batch_norm only to non-gate hidden-to-hidden dot product
+        i_t = self.inner_activation(xi_t + T.dot(h_tm1, u_i))
+        f_t = self.inner_activation(xf_t + T.dot(h_tm1, u_f))
+        c_t = f_t * c_tm1 + i_t * self.activation(xc_t + self.h_norm(T.dot(h_tm1, u_c)))
+        o_t = self.inner_activation(xo_t + T.dot(h_tm1, u_o))
+        h_t = o_t * self.activation(c_t)
+        return h_t, c_t
 
 
 class Softmax(object):
 
     def __call__(self, x):
         return T.nnet.softmax(x.reshape((-1, x.shape[-1])))
-
-
-class Linear(object):
-
-    def __init__(self, input_size, output_size, activation=Softmax(),
-                 weight_init=Uniform()):
-        self.W = theano.shared(weight_init((input_size, output_size)))
-        self.b = theano.shared(weight_init(output_size))
-        self.params = [self.W, self.b]
-
-        self.activation = activation
-
-    def __call__(self, x):
-        return self.activation(T.dot(x, self.W) + self.b)
-
-
