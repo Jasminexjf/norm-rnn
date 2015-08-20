@@ -13,6 +13,12 @@ class Uniform(object):
             np.random.uniform(-self.scale, self.scale, shape), dtype=np.float32)
 
 
+class Softmax(object):
+
+    def __call__(self, x):
+        return T.nnet.softmax(x.reshape((-1, x.shape[-1])))
+
+
 class Linear(object):
 
     def __init__(self, input_size, output_size, activation=Softmax(),
@@ -279,9 +285,3 @@ class PreActNormalizedLSTM(LSTM):
         o_t = self.inner_activation(self.norm(xo_t + T.dot(h_tm1, u_o)))
         h_t = o_t * self.activation(c_t)
         return h_t, c_t
-
-
-class Softmax(object):
-
-    def __call__(self, x):
-        return T.nnet.softmax(x.reshape((-1, x.shape[-1])))
