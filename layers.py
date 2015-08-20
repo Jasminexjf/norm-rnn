@@ -220,11 +220,20 @@ class HiddenNormalizedLSTM(LSTM):
         super(HiddenNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
 
         # hidden-to-hidden batch-normalization
-        # need to change this to have a norm for each gate
-        self.h_norm = BatchNormalization(output_size, norm_axis)
+        self.i_norm = BatchNormalization(output_size, norm_axis)
+        self.f_norm = BatchNormalization(output_size, norm_axis)
+        self.c_norm = BatchNormalization(output_size, norm_axis)
+        self.o_norm = BatchNormalization(output_size, norm_axis)
+
+        def is_matrix(p):
+            return p.ndim == 2
+
+        # remove biases
+        self.params = filter(is_matrix, self.params)
 
         # add batch-norm params
-        self.params.extend(self.h_norm.params)
+        self.params.extend(self.i_norm.params + self.f_norm.params +
+                           self.c_norm.params + self.o_norm.params)
 
     def _step(self,
         xi_t, xf_t, xo_t, xc_t,
@@ -232,10 +241,10 @@ class HiddenNormalizedLSTM(LSTM):
         u_i, u_f, u_o, u_c):
 
         # apply batch_norm to hidden-to-hidden dot product
-        i_t = self.inner_activation(xi_t + self.h_norm(T.dot(h_tm1, u_i)))
-        f_t = self.inner_activation(xf_t + self.h_norm(T.dot(h_tm1, u_f)))
-        c_t = f_t * c_tm1 + i_t * self.activation(xc_t + self.h_norm(T.dot(h_tm1, u_c)))
-        o_t = self.inner_activation(xo_t + self.h_norm(T.dot(h_tm1, u_o)))
+        i_t = self.inner_activation(xi_t + self.i_norm(T.dot(h_tm1, u_i)))
+        f_t = self.inner_activation(xf_t + self.f_norm(T.dot(h_tm1, u_f)))
+        c_t = f_t * c_tm1 + i_t * self.activation(xc_t + self.c_norm(T.dot(h_tm1, u_c)))
+        o_t = self.inner_activation(xo_t + self.o_norm(T.dot(h_tm1, u_o)))
         h_t = o_t * self.activation(c_t)
         return h_t, c_t
 
@@ -275,10 +284,20 @@ class PreActNormalizedLSTM(LSTM):
         super(PreActNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
 
         # pre-activation batch-normalization
-        self.norm = BatchNormalization(output_size, norm_axis)
+        self.i_norm = BatchNormalization(output_size, norm_axis)
+        self.f_norm = BatchNormalization(output_size, norm_axis)
+        self.c_norm = BatchNormalization(output_size, norm_axis)
+        self.o_norm = BatchNormalization(output_size, norm_axis)
+
+        def is_matrix(p):
+            return p.ndim == 2
+
+        # remove biases
+        self.params = filter(is_matrix, self.params)
 
         # add batch-norm params
-        self.params.extend(self.norm.params)
+        self.params.extend(self.i_norm.params + self.f_norm.params +
+                           self.c_norm.params + self.o_norm.params)
 
     def _step(self,
         xi_t, xf_t, xo_t, xc_t,
@@ -286,10 +305,10 @@ class PreActNormalizedLSTM(LSTM):
         u_i, u_f, u_o, u_c):
 
         # apply batch_norm to hidden-to-hidden dot product
-        i_t = self.inner_activation(self.norm(xi_t + T.dot(h_tm1, u_i)))
-        f_t = self.inner_activation(self.norm(xf_t + T.dot(h_tm1, u_f)))
-        c_t = f_t * c_tm1 + i_t * self.activation(self.norm(xc_t + T.dot(h_tm1, u_c)))
-        o_t = self.inner_activation(self.norm(xo_t + T.dot(h_tm1, u_o)))
+        i_t = self.inner_activation(self.i_norm(xi_t + T.dot(h_tm1, u_i)))
+        f_t = self.inner_activation(self.f_norm(xf_t + T.dot(h_tm1, u_f)))
+        c_t = f_t * c_tm1 + i_t * self.activation(self.c_norm(xc_t + T.dot(h_tm1, u_c)))
+        o_t = self.inner_activation(self.f_norm(xo_t + T.dot(h_tm1, u_o)))
         h_t = o_t * self.activation(c_t)
         return h_t, c_t
 
