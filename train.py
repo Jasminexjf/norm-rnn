@@ -30,7 +30,7 @@ models = {
     'Input batch normalized LSTM':
     List([
         LSTM(9998, 200),
-        BatchNormalization(200),
+        BatchNormalization(200),  # normalizes over time
         LSTM(200, 200),
         BatchNormalization(200),
         Linear(200, 9998)
@@ -47,6 +47,13 @@ models = {
     List([
         HiddenNormalizedLSTM(9998, 200),
         HiddenNormalizedLSTM(200, 200),
+        Linear(200, 9998)
+    ]),
+
+    'Pre-activation batch normalized LSTM':
+    List([
+        PreActNormalizedLSTM(9998, 200),
+        PreActNormalizedLSTM(200, 200),
         Linear(200, 9998)
     ]),
 
