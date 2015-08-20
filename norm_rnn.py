@@ -35,14 +35,18 @@ class PennTreebank(object):
         X = [self.token_to_index[t] for t in tokens]
         y = X[1:] + X[-1:]
 
+        # cast to int32 for gpu compatibility
+        X = np.asarray(X, dtype=np.int32)
+        y = np.asarray(y, dtype=np.int32)
+
         # reshape so that sentences are continuous across batches
-        self.X = np.asarray(X).reshape(-1, batch_size, time_steps)
-        self.y = np.asarray(y, np.int32).reshape(-1, batch_size, time_steps)
+        self.X = X.reshape(-1, batch_size, time_steps)
+        self.y = y.reshape(-1, batch_size, time_steps)
 
     def __iter__(self):
-        for X, y in zip(self.X[:10], self.y[:10]):
+        for X, y in zip(self.X, self.y):
             # one_hot.shape = (batch_size, time_steps, vocab_size)
-            one_hot = np.zeros(X.shape + (len(self.index_to_token),))
+            one_hot = np.zeros(X.shape + (len(self.index_to_token),), dtype=np.bool)
 
             for batch, x in enumerate(X):
                 for step, i in enumerate(x):

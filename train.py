@@ -1,4 +1,5 @@
 import numpy as np
+np.random.seed(0)
 
 from norm_rnn import ProgressBar
 from norm_rnn import PennTreebank
@@ -20,11 +21,11 @@ test_set = ProgressBar(test_set)
 models = [
 
     # reference LSTM
-    List([
-        LSTM(9998, 200),
-        LSTM(200, 200),
-        Linear(200, 9998)
-    ]),
+    #List([
+    #    LSTM(9998, 200),
+    #    LSTM(200, 200),
+    #    Linear(200, 9998)
+    #]),
 
     # batch normalized LSTM
     List([
