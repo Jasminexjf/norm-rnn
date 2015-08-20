@@ -1,4 +1,6 @@
 import sys
+import timeit
+
 import theano
 import theano.tensor as T
 import numpy as np
@@ -70,17 +72,25 @@ class PennTreebank(object):
 
 class ProgressBar(object):
 
-    def __init__(self, iter, prefix="", size=60):
+    # http://code.activestate.com/recipes/576986-progress-bar-for-console-programs-as-iterator/
+
+    def __init__(self, iter, size=60):
         self.iter = iter
-        self.prefix = prefix
         self.size = size
+        self.loss = 0
 
     def __iter__(self):
+        start = timeit.default_timer()
         count = len(self.iter)
 
         def _show(_i):
             x = int(self.size * _i / count)
-            sys.stdout.write("%s[%s%s] %i/%i\r" % (self.prefix, "#"*x, "."*(self.size-x), _i, count))
+            progress = '#' * x
+            remaining = '.' * (self.size - x)
+            time_elapsed = timeit.default_timer() - start
+            bar = '[{}{}] batch({}/{}) loss({:.2f}), time({:.2f})\r'.format(
+                progress, remaining, _i, count, self.loss, time_elapsed)
+            sys.stdout.write(bar)
             sys.stdout.flush()
 
         _show(0)
@@ -90,6 +100,9 @@ class ProgressBar(object):
             _show(i)
         sys.stdout.write("\n")
         sys.stdout.flush()
+
+    def set_loss(self, loss):
+        self.loss = loss
 
 
 class CrossEntropy(object):

@@ -21,11 +21,11 @@ test_set = ProgressBar(test_set)
 models = [
 
     # reference LSTM
-    #List([
-    #    LSTM(9998, 200),
-    #    LSTM(200, 200),
-    #    Linear(200, 9998)
-    #]),
+    List([
+        LSTM(9998, 200),
+        LSTM(200, 200),
+        Linear(200, 9998)
+    ]),
 
     # batch normalized LSTM
     List([
@@ -42,27 +42,29 @@ for model in models:
     fit = compile_model(model)
     validate = compile_model(model, update=False)
 
-    for epoch in range(10):
+    for epoch in range(1, 11):
+        print 'Epoch:', epoch
+
         # fit
         cost_list = []
         for X, y in train_set:
             cost_list.append(fit(X, y))
-            train_set.prefix = str(np.mean(cost_list))
+            train_set.set_loss(np.mean(cost_list))
 
         # validate
         cost_list = []
         for X, y in valid_set:
             cost_list.append(validate(X, y))
-            valid_set.prefix = str(np.mean(cost_list))
+            valid_set.set_loss(np.mean(cost_list))
 
     # static evaluation
     cost_list = []
     for X, y in test_set:
         cost_list.append(validate(X, y))
-        test_set.prefix = str(np.mean(cost_list))
+        test_set.set_loss(np.mean(cost_list))
 
     # dynamic evaluation
     cost_list = []
     for X, y in test_set:
         cost_list.append(fit(X, y))
-        test_set.prefix = str(np.mean(cost_list))
+        test_set.set_loss(np.mean(cost_list))

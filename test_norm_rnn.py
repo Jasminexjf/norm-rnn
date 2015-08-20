@@ -17,6 +17,13 @@ def test_penn_treebank():
     x2, y2 = ptb.__iter__().next()
 
 
+def test_progress_bar():
+    from norm_rnn import ProgressBar
+
+    for i in ProgressBar(range(10)):
+        pass
+
+
 def test_softmax():
     from layers import Softmax
 
@@ -49,4 +56,4 @@ def test_normalized_lstm():
     assert f(x).shape == (batch_size, time_steps, layer_size)
 
 
-test_normalized_lstm()
+test_progress_bar()
