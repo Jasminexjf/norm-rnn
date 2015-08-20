@@ -18,25 +18,36 @@ valid_set = ProgressBar(valid_set)
 test_set = ProgressBar(test_set)
 
 # initialize models
-models = [
+models = {
 
-    # reference LSTM
+    'Input batch normalized LSTM':
+    List([
+        LSTM(9998, 200),
+        BatchNormalization(200),
+        LSTM(200, 200),
+        BatchNormalization(200),
+        Linear(200, 9998)
+    ]),
+
+    'Reference LSTM':
     List([
         LSTM(9998, 200),
         LSTM(200, 200),
         Linear(200, 9998)
     ]),
 
-    # batch normalized LSTM
+    'Input-to-hidden batch normalized LSTM':
     List([
         NormalizedLSTM(9998, 200),
         NormalizedLSTM(200, 200),
         Linear(200, 9998)
     ])
-]
+}
 
 
-for model in models:
+for model_name, model in models:
+
+    print 'Model: {}'.format(model_name)
 
     # compile theano functions
     fit = compile_model(model)
