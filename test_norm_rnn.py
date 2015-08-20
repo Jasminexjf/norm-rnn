@@ -46,6 +46,17 @@ def test_crossentropy():
     assert f(x, y).shape == ()
 
 
+def test_batch_norm():
+    from layers import BatchNormalization
+
+    for axis in [0, 1, 2]:
+        x = T.tensor3()
+        f = theano.function([x], BatchNormalization(input_size, axis)(x))
+
+        x = np.ones((batch_size, time_steps, input_size))
+        assert f(x).shape == (batch_size, time_steps, layer_size)
+
+
 def test_normalized_lstm():
     from layers import NormalizedLSTM
 
@@ -56,4 +67,4 @@ def test_normalized_lstm():
     assert f(x).shape == (batch_size, time_steps, layer_size)
 
 
-test_progress_bar()
+test_batch_norm()

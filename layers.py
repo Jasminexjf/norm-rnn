@@ -101,17 +101,18 @@ class LSTM(object):
 
 class BatchNormalization():
 
-    def __init__(self, input_size, epsilon=1e-6):
+    def __init__(self, input_size, axis=1, epsilon=1e-6):
         self.gamma = theano.shared(np.asarray(np.ones(input_size), dtype=np.float32))
         self.beta = theano.shared(np.asarray(np.zeros(input_size), dtype=np.float32))
         self.params = [self.gamma, self.beta]
 
+        self.axis = axis
         self.epsilon = epsilon
 
     def __call__(self, x):
         # axis 1 is batch since x is dimshuffled in LSTM
-        m = x.mean(axis=1, keepdims=True)
-        std = x.std(axis=1, keepdims=True)
+        m = x.mean(axis=self.axis, keepdims=True)
+        std = x.std(axis=self.axis, keepdims=True)
         x = (x - m) / (std + self.epsilon)
         return self.gamma * x + self.beta
 
@@ -119,7 +120,8 @@ class BatchNormalization():
 class NormalizedLSTM(LSTM):
 
     def __init__(self, input_size, output_size, activation=T.tanh,
-                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
+                 inner_activation=T.nnet.softmax, weight_init=Uniform(),
+                 norm_axis=1):
         super(NormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
 
         # input-to-hidden batch-normalization
