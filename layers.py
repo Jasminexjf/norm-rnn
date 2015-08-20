@@ -257,3 +257,29 @@ class NonGateHiddenNormalizedLSTM(LSTM):
         o_t = self.inner_activation(xo_t + T.dot(h_tm1, u_o))
         h_t = o_t * self.activation(c_t)
         return h_t, c_t
+
+
+class PreActNormalizedLSTM(LSTM):
+
+    def __init__(self, input_size, output_size, activation=T.tanh,
+                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
+        super(HiddenNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+
+        # pre-activation batch-normalization
+        self.norm = BatchNormalization(output_size)
+
+        # add batch-norm params
+        self.params.extend(self.norm.params)
+
+    def _step(self,
+        xi_t, xf_t, xo_t, xc_t,
+        h_tm1, c_tm1,
+        u_i, u_f, u_o, u_c):
+
+        # apply batch_norm to hidden-to-hidden dot product
+        i_t = self.inner_activation(self.norm(xi_t + T.dot(h_tm1, u_i)))
+        f_t = self.inner_activation(self.norm(xf_t + T.dot(h_tm1, u_f)))
+        c_t = f_t * c_tm1 + i_t * self.activation(self.norm(xc_t + T.dot(h_tm1, u_c)))
+        o_t = self.inner_activation(self.norm(xo_t + T.dot(h_tm1, u_o)))
+        h_t = o_t * self.activation(c_t)
+        return h_t, c_t
