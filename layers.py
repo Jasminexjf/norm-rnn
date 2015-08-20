@@ -132,8 +132,8 @@ class NormalizedLSTM(LSTM):
 class BatchNormalization():
 
     def __init__(self, input_size, epsilon=1e-6):
-        self.gamma = theano.shared(np.ones(input_size))
-        self.beta = theano.shared(np.zeros(input_size))
+        self.gamma = theano.shared(np.asarray(np.ones(input_size), dtype=np.float32))
+        self.beta = theano.shared(np.asarray(np.zeros(input_size), dtype=np.float32))
         self.params = [self.gamma, self.beta]
 
         self.epsilon = epsilon
