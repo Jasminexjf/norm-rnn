@@ -20,19 +20,19 @@ test_set = ProgressBar(test_set)
 # initialize models
 models = {
 
+    'Reference LSTM':
+    List([
+        LSTM(9998, 200),
+        LSTM(200, 200),
+        Linear(200, 9998)
+    ]),
+
     'Input batch normalized LSTM':
     List([
         LSTM(9998, 200),
         BatchNormalization(200),
         LSTM(200, 200),
         BatchNormalization(200),
-        Linear(200, 9998)
-    ]),
-
-    'Reference LSTM':
-    List([
-        LSTM(9998, 200),
-        LSTM(200, 200),
         Linear(200, 9998)
     ]),
 
@@ -45,13 +45,13 @@ models = {
 }
 
 
-for model_name, model in models:
-
-    print 'Model: {}'.format(model_name)
+for model_name, model in models.iteritems():
 
     # compile theano functions
     fit = compile_model(model)
     validate = compile_model(model, update=False)
+
+    print 'Model: {}'.format(model_name)
 
     for epoch in range(1, 11):
         print 'Epoch:', epoch
