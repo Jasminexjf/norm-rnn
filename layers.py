@@ -91,10 +91,10 @@ class NormalizedLSTM(LSTM):
         super(NormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
 
         # input-to-hidden batch-normalization
-        self.i_norm = BatchNormalization(output_size, weight_init)
-        self.f_norm = BatchNormalization(output_size, weight_init)
-        self.c_norm = BatchNormalization(output_size, weight_init)
-        self.o_norm = BatchNormalization(output_size, weight_init)
+        self.i_norm = BatchNormalization(output_size)
+        self.f_norm = BatchNormalization(output_size)
+        self.c_norm = BatchNormalization(output_size)
+        self.o_norm = BatchNormalization(output_size)
 
         def is_matrix(p):
             return p.ndim == 2
@@ -130,9 +130,9 @@ class NormalizedLSTM(LSTM):
 
 class BatchNormalization():
 
-    def __init__(self, input_size, weight_init=Uniform, epsilon=1e-6):
-        self.gamma = theano.shared(weight_init(input_size))
-        self.beta = theano.shared(weight_init(input_size))
+    def __init__(self, input_size, epsilon=1e-6):
+        self.gamma = theano.shared(np.ones(input_size))
+        self.beta = theano.shared(np.zeros(input_size))
         self.params = [self.gamma, self.beta]
 
         self.epsilon = epsilon
