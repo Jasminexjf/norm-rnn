@@ -69,41 +69,66 @@ models = {
         NonGateHiddenNormalizedLSTM(9998, 200),
         NonGateHiddenNormalizedLSTM(200, 200),
         Linear(200, 9998)
-    ])
+    ]),
+
+    'Pre-activation non-gate batch normalized LSTM':
+    List([
+        NonGatePreActNormalizedLSTM(9998, 200),
+        NonGatePreActNormalizedLSTM(200, 200),
+        Linear(200, 9998)
+    ]),
 }
 
 
-for model_name, model in models.iteritems():
+# Batch norm outside of an LSTM layer
+# 0 = batch statistics
+# 1 = time statistics
 
-    # compile theano functions
-    fit = compile_model(model)
-    validate = compile_model(model, update=False)
+# Batch norm applied to input-to-hidden connections
+# (input is dimshuffled prior to applying)
+# TODO: shuffle after batch-norm so these match
+# 0 = time statistics
+# 1 = batch statistics
 
-    print 'Model: {}'.format(model_name)
+# Batch norm applied to hidden-to-hidden connections
+# (I think this is the case, need to check)
+# TODO: add time statistics
+# 0 = batch statistics
+# 1 = feature statistics
 
-    for epoch in range(1, 11):
-        print 'Epoch:', epoch
 
-        # fit
+for axis in [0, 1]:
+    for model_name, model in models.iteritems():
+
+        # compile theano functions
+        fit = compile_model(model)
+        validate = compile_model(model, update=False)
+
+        print 'Model: {}'.format(model_name)
+
+        for epoch in range(1, 11):
+            print 'Epoch:', epoch
+
+            # fit
+            cost_list = []
+            for X, y in train_set:
+                cost_list.append(fit(X, y))
+                train_set.set_loss(np.mean(cost_list))
+
+            # validate
+            cost_list = []
+            for X, y in valid_set:
+                cost_list.append(validate(X, y))
+                valid_set.set_loss(np.mean(cost_list))
+
+        # static evaluation
         cost_list = []
-        for X, y in train_set:
-            cost_list.append(fit(X, y))
-            train_set.set_loss(np.mean(cost_list))
-
-        # validate
-        cost_list = []
-        for X, y in valid_set:
+        for X, y in test_set:
             cost_list.append(validate(X, y))
-            valid_set.set_loss(np.mean(cost_list))
+            test_set.set_loss(np.mean(cost_list))
 
-    # static evaluation
-    cost_list = []
-    for X, y in test_set:
-        cost_list.append(validate(X, y))
-        test_set.set_loss(np.mean(cost_list))
-
-    # dynamic evaluation
-    cost_list = []
-    for X, y in test_set:
-        cost_list.append(fit(X, y))
-        test_set.set_loss(np.mean(cost_list))
+        # dynamic evaluation
+        cost_list = []
+        for X, y in test_set:
+            cost_list.append(fit(X, y))
+            test_set.set_loss(np.mean(cost_list))
