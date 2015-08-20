@@ -1,4 +1,6 @@
 import sys
+import timeit
+
 import theano
 import theano.tensor as T
 import numpy as np
@@ -35,14 +37,18 @@ class PennTreebank(object):
         X = [self.token_to_index[t] for t in tokens]
         y = X[1:] + X[-1:]
 
+        # cast to int32 for gpu compatibility
+        X = np.asarray(X, dtype=np.int32)
+        y = np.asarray(y, dtype=np.int32)
+
         # reshape so that sentences are continuous across batches
-        self.X = np.asarray(X).reshape(-1, batch_size, time_steps)
-        self.y = np.asarray(y, np.int32).reshape(-1, batch_size, time_steps)
+        self.X = X.reshape(-1, batch_size, time_steps)
+        self.y = y.reshape(-1, batch_size, time_steps)
 
     def __iter__(self):
-        for X, y in zip(self.X[:10], self.y[:10]):
+        for X, y in zip(self.X, self.y):
             # one_hot.shape = (batch_size, time_steps, vocab_size)
-            one_hot = np.zeros(X.shape + (len(self.index_to_token),))
+            one_hot = np.zeros(X.shape + (len(self.index_to_token),), dtype=np.bool)
 
             for batch, x in enumerate(X):
                 for step, i in enumerate(x):
@@ -66,17 +72,25 @@ class PennTreebank(object):
 
 class ProgressBar(object):
 
-    def __init__(self, iter, prefix="", size=60):
+    # http://code.activestate.com/recipes/576986-progress-bar-for-console-programs-as-iterator/
+
+    def __init__(self, iter, size=60):
         self.iter = iter
-        self.prefix = prefix
         self.size = size
+        self.loss = 0
 
     def __iter__(self):
+        start = timeit.default_timer()
         count = len(self.iter)
 
         def _show(_i):
             x = int(self.size * _i / count)
-            sys.stdout.write("%s[%s%s] %i/%i\r" % (self.prefix, "#"*x, "."*(self.size-x), _i, count))
+            progress = '#' * x
+            remaining = '.' * (self.size - x)
+            time_elapsed = timeit.default_timer() - start
+            bar = '[{}{}] batch({}/{}) loss({:.2f}), time({:.2f})\r'.format(
+                progress, remaining, _i, count, self.loss, time_elapsed)
+            sys.stdout.write(bar)
             sys.stdout.flush()
 
         _show(0)
@@ -86,6 +100,9 @@ class ProgressBar(object):
             _show(i)
         sys.stdout.write("\n")
         sys.stdout.flush()
+
+    def set_loss(self, loss):
+        self.loss = loss
 
 
 class CrossEntropy(object):

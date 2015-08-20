@@ -9,7 +9,8 @@ class Uniform(object):
         self.scale = scale
 
     def __call__(self, shape):
-        return np.random.uniform(-self.scale, self.scale, shape)
+        return np.asarray(
+            np.random.uniform(-self.scale, self.scale, shape), dtype=np.float32)
 
 
 class LSTM(object):
