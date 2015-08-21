@@ -77,15 +77,25 @@ class LSTM(object):
         xc = T.dot(x, self.W_c) + self.b_c
         xo = T.dot(x, self.W_o) + self.b_o
 
+        if hasattr(self, 'initial_state'):
+            initial_state = self.initial_state
+        else:
+            initial_state = T.unbroadcast(T.zeros((x.shape[1], xi.shape[2])), 1)
+
         [outputs, memories], updates = theano.scan(
             self._step,
             sequences=[xi, xf, xo, xc],
             outputs_info=[
-                T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1),
+                initial_state,
                 T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
             ],
             non_sequences=[self.U_i, self.U_f, self.U_o, self.U_c],
         )
+
+        if hasattr(self, 'initial_state'):
+            self.updates = [(self.initial_state, outputs[-1])]
+        else:
+            self.updates = []
 
         return outputs.dimshuffle((1, 0, 2))
 
@@ -103,6 +113,9 @@ class LSTM(object):
 
     def _alloc_zeros_matrix(self, *dims):
         return T.alloc(np.cast[theano.config.floatX](0.), *dims)
+
+    def set_state(self, initial_state):
+        self.initial_state = theano.shared(initial_state)
 
 
 class BatchNormalization():
