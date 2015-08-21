@@ -37,11 +37,11 @@ def test_softmax():
 def test_embed():
     from layers import Embed
 
-    x = T.tensor3()
+    x = T.imatrix()
     f = theano.function([x], Embed(input_size, layer_size)(x))
 
-    x = np.ones((batch_size, time_steps), dtype=np.int32)
-    assert f(x).shape == (batch_size * time_steps, input_size)
+    X = np.ones((batch_size, time_steps), dtype=np.int32)
+    assert f(X).shape == (batch_size, time_steps, layer_size)
 
 
 def test_crossentropy():
