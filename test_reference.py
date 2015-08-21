@@ -23,16 +23,15 @@ test_set = ProgressBar(test_set)
 
 # config model
 model = List([
-    LSTM(9998, 200),
-    LSTM(200, 200),
+    Embed(9998, 200),
+    NormalizedLSTM(200, 200),
+    NormalizedLSTM(200, 200),
     Linear(200, 9998)
 ])
 
-# set LSTM states
-state = np.zeros([batch_size, 200])
-model.layers[0].set_state(state, state)
-model.layers[0].set_state(state, state)
-
+state = np.zeros((batch_size, 200), dtype=theano.config.floatX)
+#model.layers[1].set_state(state, state)
+#model.layers[2].set_state(state, state)
 
 # compile theano functions
 fit = compile_model(model)

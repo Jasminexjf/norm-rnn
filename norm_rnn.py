@@ -173,7 +173,7 @@ class List(object):
 
 
 def compile_model(model, update=True):
-    x = T.tensor3()
+    x = T.imatrix()
     y = T.ivector()
 
     # gradients
