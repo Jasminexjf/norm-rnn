@@ -49,7 +49,8 @@ def test_crossentropy():
 def test_lstm():
     from layers import LSTM
     lstm = LSTM(input_size, layer_size)
-    lstm.set_state(np.zeros((batch_size, layer_size), dtype=theano.config.floatX))
+    lstm.set_state(np.zeros((batch_size, layer_size), dtype=theano.config.floatX),
+                   np.zeros((batch_size, layer_size), dtype=theano.config.floatX))
 
     x = T.tensor3()
     f = theano.function([x], lstm(x), updates=lstm.updates)
@@ -58,11 +59,14 @@ def test_lstm():
     X = np.ones((batch_size, time_steps, input_size))
     assert f(X).shape == (batch_size, time_steps, layer_size)
 
-    print lstm.initial_state.get_value()
+    h1, c1 = lstm.h.get_value(), lstm.c.get_value()
 
     f(X)
 
-    print lstm.initial_state.get_value()
+    h2, c2 = lstm.h.get_value(), lstm.c.get_value()
+
+    assert not np.all(h1 == h2)
+    assert not np.all(c1 == c2)
 
 
 def test_batch_norm():

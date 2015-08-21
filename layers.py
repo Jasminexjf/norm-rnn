@@ -69,6 +69,13 @@ class LSTM(object):
         self.activation = activation
         self.inner_activation = inner_activation
 
+        # initial state
+        self.h = None
+        self.c = None
+
+        # updates is used to set new initial states
+        self.updates = []
+
     def __call__(self, x):
         x = x.dimshuffle((1, 0, 2))
 
@@ -77,25 +84,22 @@ class LSTM(object):
         xc = T.dot(x, self.W_c) + self.b_c
         xo = T.dot(x, self.W_o) + self.b_o
 
-        if hasattr(self, 'initial_state'):
-            initial_state = self.initial_state
-        else:
-            initial_state = T.unbroadcast(T.zeros((x.shape[1], xi.shape[2])), 1)
+        if self.h is None:
+            self.h = T.unbroadcast(T.zeros((x.shape[1], xi.shape[2])), 1)
+        if self.c is None:
+            self.c = T.unbroadcast(T.zeros((x.shape[1], xi.shape[2])), 1)
 
-        [outputs, memories], updates = theano.scan(
-            self._step,
+        [outputs, memories], updates = theano.scan(self._step,
             sequences=[xi, xf, xo, xc],
-            outputs_info=[
-                initial_state,
-                T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
-            ],
+            outputs_info=[self.h, self.c],
             non_sequences=[self.U_i, self.U_f, self.U_o, self.U_c],
         )
 
-        if hasattr(self, 'initial_state'):
-            self.updates = [(self.initial_state, outputs[-1])]
-        else:
-            self.updates = []
+        # if state is a shared variable, we update it
+        if isinstance(self.h, T.sharedvar.TensorSharedVariable):
+            self.updates.append([self.h, outputs[-1]])
+        if isinstance(self.c, T.sharedvar.TensorSharedVariable):
+            self.updates.append([self.c, memories[-1]])
 
         return outputs.dimshuffle((1, 0, 2))
 
@@ -114,8 +118,9 @@ class LSTM(object):
     def _alloc_zeros_matrix(self, *dims):
         return T.alloc(np.cast[theano.config.floatX](0.), *dims)
 
-    def set_state(self, initial_state):
-        self.initial_state = theano.shared(initial_state)
+    def set_state(self, h, c):
+        self.h = theano.shared(h)
+        self.c = theano.shared(c)
 
 
 class BatchNormalization():
