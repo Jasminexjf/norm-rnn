@@ -33,6 +33,16 @@ class Linear(object):
         return self.activation(T.dot(x, self.W) + self.b)
 
 
+class Embed(object):
+
+    def __init__(self, input_size, output_size, weight_init=Uniform()):
+        self.W = theano.shared(weight_init((input_size, output_size)))
+        self.params = [self.W]
+
+    def __call__(self, x):
+        return self.W[x]
+
+
 class LSTM(object):
 
     # stripped down LSTM from Keras
@@ -85,9 +95,9 @@ class LSTM(object):
         xo = T.dot(x, self.W_o) + self.b_o
 
         if self.h is None:
-            self.h = T.unbroadcast(T.zeros((x.shape[1], xi.shape[2])), 1)
+            self.h = T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
         if self.c is None:
-            self.c = T.unbroadcast(T.zeros((x.shape[1], xi.shape[2])), 1)
+            self.c = T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
 
         [outputs, memories], updates = theano.scan(self._step,
             sequences=[xi, xf, xo, xc],
@@ -134,7 +144,6 @@ class BatchNormalization():
         self.epsilon = epsilon
 
     def __call__(self, x):
-        # axis 1 is batch since x is dimshuffled in LSTM
         m = x.mean(axis=self.axis, keepdims=True)
         std = x.std(axis=self.axis, keepdims=True)
         x = (x - m) / (std + self.epsilon)

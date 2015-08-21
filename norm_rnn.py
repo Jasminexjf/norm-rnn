@@ -50,15 +50,7 @@ class PennTreebank(object):
 
     def __iter__(self):
         for X, y in zip(self.X, self.y):
-            # one_hot.shape = (batch_size, time_steps, vocab_size)
-            one_hot = np.zeros(X.shape + (len(self.index_to_token),), dtype=np.bool)
-
-            for batch, x in enumerate(X):
-                for step, i in enumerate(x):
-                    one_hot[batch, step, i] = 1
-
-            # y.reshape
-            yield one_hot, y.reshape(-1)
+            yield X, y.reshape(-1) # move reshape to cost function
 
     def __len__(self):
         # number of batches
@@ -184,13 +176,22 @@ def compile_model(model, update=True):
     x = T.tensor3()
     y = T.ivector()
 
+    # gradients
     cost = CrossEntropy()(model(x), y)
     grads = [T.grad(cost, param) for param in model.params]
 
+    # param updates
     if update:
         updates = SGD()(model.params, grads)
     else:
-        updates = None
+        updates = []
 
-    fit = theano.function([x, y], cost, updates=updates)
-    return fit
+    # state updates
+    for layer in model.layers:
+        try:
+            updates.extend(layer.updates)
+        except AttributeError:
+            pass
+
+    # compile
+    return theano.function([x, y], cost, updates=updates)

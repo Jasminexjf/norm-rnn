@@ -27,10 +27,20 @@ def test_progress_bar():
 def test_softmax():
     from layers import Softmax
 
-    x = T.tensor3()
+    x = T.tensor2()
     f = theano.function([x], Softmax()(x))
 
     x = np.ones((batch_size, time_steps, input_size))
+    assert f(x).shape == (batch_size * time_steps, input_size)
+
+
+def test_embed():
+    from layers import Embed
+
+    x = T.tensor3()
+    f = theano.function([x], Embed(input_size, layer_size)(x))
+
+    x = np.ones((batch_size, time_steps), dtype=np.int32)
     assert f(x).shape == (batch_size * time_steps, input_size)
 
 
@@ -105,4 +115,4 @@ import inspect
 #[test() for test in inspect.getmembers(sys.modules[__name__], inspect.isfunction)]
 
 
-test_lstm()
+test_embed()
