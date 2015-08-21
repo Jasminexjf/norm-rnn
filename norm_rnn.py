@@ -45,6 +45,9 @@ class PennTreebank(object):
         self.X = X.reshape(-1, batch_size, time_steps)
         self.y = y.reshape(-1, batch_size, time_steps)
 
+        self.batch_size = batch_size
+        self.time_steps = time_steps
+
     def __iter__(self):
         for X, y in zip(self.X, self.y):
             # one_hot.shape = (batch_size, time_steps, vocab_size)
