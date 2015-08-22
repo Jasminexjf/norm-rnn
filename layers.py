@@ -48,7 +48,7 @@ class LSTM(object):
     # stripped down LSTM from Keras
 
     def __init__(self, input_size, output_size, activation=T.tanh,
-                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
+                 inner_activation=T.nnet.sigmoid, weight_init=Uniform()):
         W_shape = input_size, output_size
         U_shape = output_size, output_size
         b_shape = output_size
@@ -79,13 +79,6 @@ class LSTM(object):
         self.activation = activation
         self.inner_activation = inner_activation
 
-        # initial state
-        self.h = None
-        self.c = None
-
-        # updates is used to set new initial states
-        self.updates = []
-
     def __call__(self, x):
         x = x.dimshuffle((1, 0, 2))
 
@@ -94,22 +87,14 @@ class LSTM(object):
         xc = T.dot(x, self.W_c) + self.b_c
         xo = T.dot(x, self.W_o) + self.b_o
 
-        if self.h is None:
-            self.h = T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
-        if self.c is None:
-            self.c = T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
-
         [outputs, memories], updates = theano.scan(self._step,
             sequences=[xi, xf, xo, xc],
-            outputs_info=[self.h, self.c],
+            outputs_info=[
+                T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1),
+                T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
+            ],
             non_sequences=[self.U_i, self.U_f, self.U_o, self.U_c],
         )
-
-        # if state is a shared variable, we update it
-        if isinstance(self.h, T.sharedvar.TensorSharedVariable):
-            self.updates.append([self.h, outputs[-1]])
-        if isinstance(self.c, T.sharedvar.TensorSharedVariable):
-            self.updates.append([self.c, memories[-1]])
 
         return outputs.dimshuffle((1, 0, 2))
 
@@ -126,7 +111,7 @@ class LSTM(object):
         return h_t, c_t
 
     def _alloc_zeros_matrix(self, *dims):
-        return T.alloc(np.cast[theano.config.floatX](0.), *dims)
+        return T.alloc(np.cast[np.float32](0.), *dims)
 
     def set_state(self, h, c):
         self.h = theano.shared(h)
