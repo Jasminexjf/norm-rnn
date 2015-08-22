@@ -18,6 +18,12 @@ model = List([
     Linear(200, 9998)
 ])
 
+# initialize shared memory for lstm states
+# (need to find a way to push this into the layer)
+for layer in model.layers:
+    if isinstance(layer, LSTM):
+        layer.set_state(train_set.batch_size)
+
 # compile theano functions
 fit = compile_model(model, train_set, update=True)
 val = compile_model(model, valid_set, update=False)
