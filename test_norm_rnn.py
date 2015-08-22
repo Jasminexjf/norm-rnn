@@ -66,7 +66,7 @@ def test_lstm():
     f = theano.function([x], lstm(x), updates=lstm.updates)
 
     # check shape
-    X = np.ones((batch_size, time_steps, input_size))
+    X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
     assert f(X).shape == (batch_size, time_steps, layer_size)
 
     h1, c1 = lstm.h.get_value(), lstm.c.get_value()
@@ -107,12 +107,40 @@ def test_norm_layers():
             assert f(x).shape == (batch_size, time_steps, layer_size)
 
 
-import sys
-import inspect
+def test_lstm_update():
+    from layers import LSTM, Linear
+    lstm = LSTM(input_size, layer_size)
+    linear = Linear(layer_size, input_size)
 
-# run tests
-# (but... but why not unittest?)
-#[test() for test in inspect.getmembers(sys.modules[__name__], inspect.isfunction)]
+    x = T.tensor3()
+    y = T.ivector()
+
+    from norm_rnn import CrossEntropy
+    cost = CrossEntropy()(linear(lstm(x)), y)
+    grads = [T.grad(cost, param) for param in lstm.params]
+
+    from norm_rnn import SGD
+    updates = SGD()(lstm.params, grads)
+
+    f = theano.function([x], cost, updates=updates)
+
+    # check shape
+    X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
+    y = np.ones((batch_size * time_steps), dtype=np.int32)
+    print f(X, y)
 
 
-test_embed()
+def test_lstm_step():
+    from layers import LSTM
+    lstm = LSTM(input_size, layer_size)
+
+    x = T.tensor3()
+    f = theano.function([x], lstm(x))
+
+    # check shape
+    X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
+    assert f(X).dtype == np.float32
+
+
+if __name__ == '__main__':
+    test_lstm_step()

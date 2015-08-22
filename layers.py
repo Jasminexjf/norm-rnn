@@ -94,6 +94,8 @@ class LSTM(object):
         xc = T.dot(x, self.W_c) + self.b_c
         xo = T.dot(x, self.W_o) + self.b_o
 
+        return x
+
         if self.h is None:
             self.h = T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
         if self.c is None:
