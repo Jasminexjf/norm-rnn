@@ -59,8 +59,8 @@ def test_crossentropy():
 def test_lstm():
     from layers import LSTM
     lstm = LSTM(input_size, layer_size)
-    lstm.set_state(np.zeros((batch_size, layer_size), dtype=theano.config.floatX),
-                   np.zeros((batch_size, layer_size), dtype=theano.config.floatX))
+    lstm.set_state(np.zeros((batch_size, layer_size), dtype=np.float32),
+                   np.zeros((batch_size, layer_size), dtype=np.float32))
 
     x = T.tensor3()
     f = theano.function([x], lstm(x), updates=lstm.updates)
@@ -107,12 +107,33 @@ def test_norm_layers():
             assert f(x).shape == (batch_size, time_steps, layer_size)
 
 
-import sys
-import inspect
+def test_lstm_update():
+    from layers import LSTM, Linear
+    lstm = LSTM(input_size, layer_size)
+    linear = Linear(layer_size, input_size)
 
-# run tests
-# (but... but why not unittest?)
-#[test() for test in inspect.getmembers(sys.modules[__name__], inspect.isfunction)]
+    x = T.tensor3()
+    y = T.ivector()
+
+    X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
+    Y = np.ones((batch_size * time_steps), dtype=np.int32)
+
+    from norm_rnn import CrossEntropy
+    cost = CrossEntropy()(linear(lstm(x)), y)
+    grads = [T.grad(cost, param) for param in lstm.params]
+
+    #for param in lstm.params:
+    #    print param
+
+    #for grad in grads:
+    #    print grad.eval({x: X, y: Y}).dtype
+
+    from norm_rnn import SGD
+    updates = SGD()(lstm.params, grads)
+
+    f = theano.function([x, y], cost)
+
+    print f(x, y)
 
 
-test_embed()
+test_lstm_update()
