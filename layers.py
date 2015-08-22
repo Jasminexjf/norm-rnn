@@ -48,7 +48,8 @@ class LSTM(object):
     # stripped down LSTM from Keras
 
     def __init__(self, input_size, output_size, activation=T.tanh,
-                 inner_activation=T.nnet.sigmoid, weight_init=Uniform()):
+                 inner_activation=T.nnet.sigmoid, weight_init=Uniform(),
+                 reset_state=True):
         W_shape = input_size, output_size
         U_shape = output_size, output_size
         b_shape = output_size
@@ -79,6 +80,8 @@ class LSTM(object):
         self.activation = activation
         self.inner_activation = inner_activation
 
+        self.reset_state = reset_state
+
     def __call__(self, x):
         x = x.dimshuffle((1, 0, 2))
 
@@ -87,13 +90,21 @@ class LSTM(object):
         xc = T.dot(x, self.W_c) + self.b_c
         xo = T.dot(x, self.W_o) + self.b_o
 
+        if self.reset_state:
+            h = self._alloc_zeros_matrix(x.shape[1], xi.shape[2])
+            c = self._alloc_zeros_matrix(x.shape[1], xi.shape[2])
+        else:
+            h = theano.shared(np.zeros((x.shape[1], xi.shape[2]), dtype=theano.config.floatX))
+            c = theano.shared(np.zeros((x.shape[1], xi.shape[2]), dtype=theano.config.floatX))
+
         [outputs, memories], updates = theano.scan(self._step,
             sequences=[xi, xf, xo, xc],
-            outputs_info=[
-                T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1),
-                T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)],
+            outputs_info=[h, c],
             non_sequences=[self.U_i, self.U_f, self.U_o, self.U_c],
         )
+
+        if not self.reset_state:
+            self.updates = [(h, outputs[-1]), (c, memories[-1])]
 
         return outputs.dimshuffle((1, 0, 2))
 

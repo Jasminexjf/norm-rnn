@@ -95,4 +95,10 @@ def compile_model(model, dataset, update=True):
     else:
         updates = []
 
+    for layer in model.layers:
+        try:
+            updates.extend(layer.updates)
+        except AttributeError:
+            pass
+
     return theano.function([i], cost, None, updates, givens)
