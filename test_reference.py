@@ -1,41 +1,23 @@
 import numpy as np
 np.random.seed(0)
 
-from norm_rnn import ProgressBar
-from norm_rnn import PennTreebank
+from datasets import PennTreebank
 from norm_rnn import List
 from norm_rnn import compile_model
 from layers import *
 
 # load data
 train_set = PennTreebank()
-valid_set = PennTreebank(path=PennTreebank.valid_path, vocab=train_set.vocab)
-test_set = PennTreebank(path=PennTreebank.test_path, vocab=train_set.vocab)
-
-batch_size = train_set.batch_size
-
-# progress bars
-# make progress bars a decorator in order to
-# be able to access underlying function
-train_set = ProgressBar(train_set)
-valid_set = ProgressBar(valid_set)
-test_set = ProgressBar(test_set)
 
 # config model
 model = List([
     Embed(9998, 200),
-    NormalizedLSTM(200, 200),
-    NormalizedLSTM(200, 200),
+    LSTM(200, 200),
     Linear(200, 9998)
 ])
 
-state = np.zeros((batch_size, 200), dtype=theano.config.floatX)
-#model.layers[1].set_state(state, state)
-#model.layers[2].set_state(state, state)
-
 # compile theano functions
-fit = compile_model(model)
-validate = compile_model(model, update=False)
+fit = compile_model(model, train_set)
 
 # train
 for epoch in range(1, 11):
@@ -43,24 +25,5 @@ for epoch in range(1, 11):
 
     # fit
     cost_list = []
-    for X, y in train_set:
-        cost_list.append(fit(X, y))
-        train_set.set_loss(np.mean(cost_list))
-
-    # validate
-    cost_list = []
-    for X, y in valid_set:
-        cost_list.append(validate(X, y))
-        valid_set.set_loss(np.mean(cost_list))
-
-# static evaluation
-cost_list = []
-for X, y in test_set:
-    cost_list.append(validate(X, y))
-    test_set.set_loss(np.mean(cost_list))
-
-# dynamic evaluation
-cost_list = []
-for X, y in test_set:
-    cost_list.append(fit(X, y))
-    test_set.set_loss(np.mean(cost_list))
+    for batch in train_set:
+        print fit(batch)
