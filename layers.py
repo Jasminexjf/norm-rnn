@@ -47,12 +47,11 @@ class LSTM(object):
 
     # stripped down LSTM from Keras
 
-    def __init__(self, input_size, output_size, activation=T.tanh,
-                 inner_activation=T.nnet.sigmoid, weight_init=Uniform(),
-                 reset_state=True):
-        W_shape = input_size, output_size
-        U_shape = output_size, output_size
-        b_shape = output_size
+    def __init__(self, input_size, layer_size, activation=T.tanh,
+                 inner_activation=T.nnet.sigmoid, weight_init=Uniform()):
+        W_shape = input_size, layer_size
+        U_shape = layer_size, layer_size
+        b_shape = layer_size
 
         self.W_i = theano.shared(weight_init(W_shape))
         self.U_i = theano.shared(weight_init(U_shape))
@@ -80,7 +79,8 @@ class LSTM(object):
         self.activation = activation
         self.inner_activation = inner_activation
 
-        self.reset_state = reset_state
+        self.shared_state = False
+        self.layer_size = layer_size
 
     def __call__(self, x):
         x = x.dimshuffle((1, 0, 2))
@@ -90,21 +90,19 @@ class LSTM(object):
         xc = T.dot(x, self.W_c) + self.b_c
         xo = T.dot(x, self.W_o) + self.b_o
 
-        if self.reset_state:
-            h = self._alloc_zeros_matrix(x.shape[1], xi.shape[2])
-            c = self._alloc_zeros_matrix(x.shape[1], xi.shape[2])
-        else:
-            h = theano.shared(np.zeros((x.shape[1], xi.shape[2]), dtype=theano.config.floatX))
-            c = theano.shared(np.zeros((x.shape[1], xi.shape[2]), dtype=theano.config.floatX))
+        # if set_state hasn't been called, use temporary zeros (stateless)
+        if not self.shared_state:
+            self.h = self._alloc_zeros_matrix(x.shape[1], xi.shape[2])
+            self.c = self._alloc_zeros_matrix(x.shape[1], xi.shape[2])
 
         [outputs, memories], updates = theano.scan(self._step,
             sequences=[xi, xf, xo, xc],
-            outputs_info=[h, c],
+            outputs_info=[self.h, self.c],
             non_sequences=[self.U_i, self.U_f, self.U_o, self.U_c],
         )
 
-        if not self.reset_state:
-            self.updates = [(h, outputs[-1]), (c, memories[-1])]
+        if self.shared_state:
+            self.updates = [(self.h, outputs[-1]), (self.c, memories[-1])]
 
         return outputs.dimshuffle((1, 0, 2))
 
@@ -122,6 +120,12 @@ class LSTM(object):
 
     def _alloc_zeros_matrix(self, *dims):
         return T.alloc(np.cast[theano.config.floatX](0.), *dims)
+
+    def set_state(self, batch_size):
+        # make hidden and cells a shared variable so that state is persistent
+        self.h = theano.shared(np.zeros((batch_size, self.layer_size), dtype=theano.config.floatX))
+        self.c = theano.shared(np.zeros((batch_size, self.layer_size), dtype=theano.config.floatX))
+        self.shared_state = True
 
 
 class BatchNormalization():
@@ -143,18 +147,18 @@ class BatchNormalization():
 
 class NormalizedLSTM(LSTM):
 
-    def __init__(self, input_size, output_size, activation=T.tanh,
+    def __init__(self, input_size, layer_size, activation=T.tanh,
                  inner_activation=T.nnet.softmax, weight_init=Uniform(),
                  norm_axis=1):
-        super(NormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+        super(NormalizedLSTM, self).__init__(input_size, layer_size, activation, inner_activation, weight_init)
 
         # input-to-hidden batch-normalization
         # (input is dimshuffled, resulting in batch-norm being
         # applied to (time_steps, batch_size, layer_size))
-        self.i_norm = BatchNormalization(output_size, norm_axis)
-        self.f_norm = BatchNormalization(output_size, norm_axis)
-        self.c_norm = BatchNormalization(output_size, norm_axis)
-        self.o_norm = BatchNormalization(output_size, norm_axis)
+        self.i_norm = BatchNormalization(layer_size, norm_axis)
+        self.f_norm = BatchNormalization(layer_size, norm_axis)
+        self.c_norm = BatchNormalization(layer_size, norm_axis)
+        self.o_norm = BatchNormalization(layer_size, norm_axis)
 
         def is_matrix(p):
             return p.ndim == 2
@@ -192,13 +196,13 @@ class NonGateNormalizedLSTM(LSTM):
 
     # combine this with normalized lstm by adding norm_gates arg to __init__
 
-    def __init__(self, input_size, output_size, activation=T.tanh,
+    def __init__(self, input_size, layer_size, activation=T.tanh,
                  inner_activation=T.nnet.softmax, weight_init=Uniform(),
                  norm_axis=1):
-        super(NonGateNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+        super(NonGateNormalizedLSTM, self).__init__(input_size, layer_size, activation, inner_activation, weight_init)
 
         # input-to-hidden batch-normalization
-        self.c_norm = BatchNormalization(output_size, norm_axis)
+        self.c_norm = BatchNormalization(layer_size, norm_axis)
 
         # remove non-gate bias
         self.params.pop(5)
@@ -232,16 +236,16 @@ class NonGateNormalizedLSTM(LSTM):
 
 class HiddenNormalizedLSTM(LSTM):
 
-    def __init__(self, input_size, output_size, activation=T.tanh,
+    def __init__(self, input_size, layer_size, activation=T.tanh,
                  inner_activation=T.nnet.softmax, weight_init=Uniform(),
                  norm_axis=1):
-        super(HiddenNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+        super(HiddenNormalizedLSTM, self).__init__(input_size, layer_size, activation, inner_activation, weight_init)
 
         # hidden-to-hidden batch-normalization
-        self.i_norm = BatchNormalization(output_size, norm_axis)
-        self.f_norm = BatchNormalization(output_size, norm_axis)
-        self.c_norm = BatchNormalization(output_size, norm_axis)
-        self.o_norm = BatchNormalization(output_size, norm_axis)
+        self.i_norm = BatchNormalization(layer_size, norm_axis)
+        self.f_norm = BatchNormalization(layer_size, norm_axis)
+        self.c_norm = BatchNormalization(layer_size, norm_axis)
+        self.o_norm = BatchNormalization(layer_size, norm_axis)
 
         def is_matrix(p):
             return p.ndim == 2
@@ -269,13 +273,13 @@ class HiddenNormalizedLSTM(LSTM):
 
 class NonGateHiddenNormalizedLSTM(LSTM):
 
-    def __init__(self, input_size, output_size, activation=T.tanh,
+    def __init__(self, input_size, layer_size, activation=T.tanh,
                  inner_activation=T.nnet.softmax, weight_init=Uniform(),
                  norm_axis=1):
-        super(NonGateHiddenNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+        super(NonGateHiddenNormalizedLSTM, self).__init__(input_size, layer_size, activation, inner_activation, weight_init)
 
         # hidden-to-hidden batch-normalization
-        self.h_norm = BatchNormalization(output_size, norm_axis)
+        self.h_norm = BatchNormalization(layer_size, norm_axis)
 
         # add batch-norm params
         self.params.extend(self.h_norm.params)
@@ -296,16 +300,16 @@ class NonGateHiddenNormalizedLSTM(LSTM):
 
 class PreActNormalizedLSTM(LSTM):
 
-    def __init__(self, input_size, output_size, activation=T.tanh,
+    def __init__(self, input_size, layer_size, activation=T.tanh,
                  inner_activation=T.nnet.softmax, weight_init=Uniform(),
                  norm_axis=1):
-        super(PreActNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+        super(PreActNormalizedLSTM, self).__init__(input_size, layer_size, activation, inner_activation, weight_init)
 
         # pre-activation batch-normalization
-        self.i_norm = BatchNormalization(output_size, norm_axis)
-        self.f_norm = BatchNormalization(output_size, norm_axis)
-        self.c_norm = BatchNormalization(output_size, norm_axis)
-        self.o_norm = BatchNormalization(output_size, norm_axis)
+        self.i_norm = BatchNormalization(layer_size, norm_axis)
+        self.f_norm = BatchNormalization(layer_size, norm_axis)
+        self.c_norm = BatchNormalization(layer_size, norm_axis)
+        self.o_norm = BatchNormalization(layer_size, norm_axis)
 
         def is_matrix(p):
             return p.ndim == 2
@@ -333,13 +337,13 @@ class PreActNormalizedLSTM(LSTM):
 
 class NonGatePreActNormalizedLSTM(LSTM):
 
-    def __init__(self, input_size, output_size, activation=T.tanh,
+    def __init__(self, input_size, layer_size, activation=T.tanh,
                  inner_activation=T.nnet.softmax, weight_init=Uniform(),
                  norm_axis=1):
-        super(NonGatePreActNormalizedLSTM, self).__init__(input_size, output_size, activation, inner_activation, weight_init)
+        super(NonGatePreActNormalizedLSTM, self).__init__(input_size, layer_size, activation, inner_activation, weight_init)
 
         # pre-activation batch-normalization
-        self.norm = BatchNormalization(output_size, norm_axis)
+        self.norm = BatchNormalization(layer_size, norm_axis)
 
         # add batch-norm params
         self.params.extend(self.norm.params)
