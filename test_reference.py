@@ -15,7 +15,6 @@ valid_set = PennTreebank(path=PennTreebank.valid_path, vocab=train_set.vocab)
 model = List([
     Embed(9998, 200),
     LSTM(200, 200),
-    LSTM(200, 200),
     Linear(200, 9998)
 ])
 

@@ -91,8 +91,7 @@ class LSTM(object):
             sequences=[xi, xf, xo, xc],
             outputs_info=[
                 T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1),
-                T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
-            ],
+                T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)],
             non_sequences=[self.U_i, self.U_f, self.U_o, self.U_c],
         )
 
@@ -111,7 +110,7 @@ class LSTM(object):
         return h_t, c_t
 
     def _alloc_zeros_matrix(self, *dims):
-        return T.alloc(np.cast[np.float32](0.), *dims)
+        return T.alloc(np.cast[theano.config.floatX](0.), *dims)
 
 
 class BatchNormalization():
