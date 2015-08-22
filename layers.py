@@ -48,7 +48,7 @@ class LSTM(object):
     # stripped down LSTM from Keras
 
     def __init__(self, input_size, output_size, activation=T.tanh,
-                 inner_activation=T.nnet.softmax, weight_init=Uniform()):
+                 inner_activation=T.nnet.sigmoid, weight_init=Uniform()):
         W_shape = input_size, output_size
         U_shape = output_size, output_size
         b_shape = output_size
@@ -93,8 +93,6 @@ class LSTM(object):
         xf = T.dot(x, self.W_f) + self.b_f
         xc = T.dot(x, self.W_c) + self.b_c
         xo = T.dot(x, self.W_o) + self.b_o
-
-        return x
 
         if self.h is None:
             self.h = T.unbroadcast(self._alloc_zeros_matrix(x.shape[1], xi.shape[2]), 1)
