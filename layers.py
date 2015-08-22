@@ -113,10 +113,6 @@ class LSTM(object):
     def _alloc_zeros_matrix(self, *dims):
         return T.alloc(np.cast[np.float32](0.), *dims)
 
-    def set_state(self, h, c):
-        self.h = theano.shared(h)
-        self.c = theano.shared(c)
-
 
 class BatchNormalization():
 

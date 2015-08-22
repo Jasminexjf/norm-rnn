@@ -9,21 +9,6 @@ input_size = 4
 layer_size = 5
 
 
-def test_penn_treebank():
-    from norm_rnn import PennTreebank
-    ptb = PennTreebank()
-
-    x1, y1 = ptb.__iter__().next()
-    x2, y2 = ptb.__iter__().next()
-
-
-def test_progress_bar():
-    from norm_rnn import ProgressBar
-
-    for i in ProgressBar(range(10)):
-        pass
-
-
 def test_softmax():
     from layers import Softmax
 
@@ -66,7 +51,7 @@ def test_lstm():
     f = theano.function([x], lstm(x), updates=lstm.updates)
 
     # check shape
-    X = np.ones((batch_size, time_steps, input_size))
+    X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
     assert f(X).shape == (batch_size, time_steps, layer_size)
 
     h1, c1 = lstm.h.get_value(), lstm.c.get_value()
@@ -115,13 +100,17 @@ def test_lstm_update():
     x = T.tensor3()
     y = T.ivector()
 
+<<<<<<< HEAD:test_norm_rnn.py
     X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
     Y = np.ones((batch_size * time_steps), dtype=np.int32)
 
+=======
+>>>>>>> 747158fd9f945577e3aca07a98b5987b0563d53c:tests/test_layers.py
     from norm_rnn import CrossEntropy
     cost = CrossEntropy()(linear(lstm(x)), y)
     grads = [T.grad(cost, param) for param in lstm.params]
 
+<<<<<<< HEAD:test_norm_rnn.py
     #for param in lstm.params:
     #    print param
 
@@ -137,3 +126,20 @@ def test_lstm_update():
 
 
 test_lstm_update()
+=======
+    from norm_rnn import SGD
+    updates = SGD()(lstm.params, grads)
+
+    f = theano.function([x, y], cost, updates=updates)
+
+    X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
+    Y = np.ones((batch_size * time_steps), dtype=np.int32)
+
+    print Y.shape
+
+    print f(X, Y)
+
+
+if __name__ == '__main__':
+    test_lstm_update()
+>>>>>>> 747158fd9f945577e3aca07a98b5987b0563d53c:tests/test_layers.py
