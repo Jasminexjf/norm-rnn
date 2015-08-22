@@ -91,20 +91,12 @@ def compile_model(model, dataset, update=True):
 
     # grads
     cost = CrossEntropy()(model(x), y)
-    grads = [T.grad(cost, param) for param in model.params]
 
     # updates
     if update:
+        grads = [T.grad(cost, param) for param in model.params]
         updates = SGD()(model.params, grads)
     else:
         updates = []
 
-    # state updates
-    #for layer in model.layers:
-    #    try:
-    #        updates.extend(layer.updates)
-    #    except AttributeError:
-    #        pass
-
-    # compile
     return theano.function([i], cost, None, updates, givens)
