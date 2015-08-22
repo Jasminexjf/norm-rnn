@@ -43,14 +43,10 @@ class PennTreebank(object):
 
         # reshape so that sentences are continuous across batches
         self.X = X.reshape(-1, batch_size, time_steps)
-        self.y = y.reshape(-1, batch_size, time_steps)
+        self.y = y.reshape(-1, batch_size * time_steps) # make this a matrix and move reshape to softmax
 
         self.batch_size = batch_size
         self.time_steps = time_steps
-
-    def __iter__(self):
-        for X, y in zip(self.X, self.y):
-            yield X, y.reshape(-1) # move reshape to cost function
 
     def __len__(self):
         # number of batches
@@ -172,9 +168,10 @@ class List(object):
         return params
 
 
-def compile_model(model, update=True):
+def compile_model(model, dataset, update=True):
     x = T.imatrix()
     y = T.ivector()
+    i = T.iscalar()
 
     # gradients
     cost = CrossEntropy()(model(x), y)
@@ -187,11 +184,16 @@ def compile_model(model, update=True):
         updates = []
 
     # state updates
-    for layer in model.layers:
-        try:
-            updates.extend(layer.updates)
-        except AttributeError:
-            pass
+    #for layer in model.layers:
+    #    try:
+    #        updates.extend(layer.updates)
+    #    except AttributeError:
+    #        pass
+
+    # make X, y shared a map to symbolic
+    X = theano.shared(dataset.X)
+    Y = theano.shared(dataset.y)
+    givens = {x: X[i], y: Y[i]}
 
     # compile
-    return theano.function([x, y], cost, updates=updates)
+    return theano.function([i], cost, None, updates, givens)
