@@ -106,10 +106,10 @@ class List(object):
         params = []
         for layer in self.layers:
             try:
-	        params.extend(layer.params)
+                params.extend(layer.params)
             except AttributeError:
-		pass # layer has no params (i.e. dropout)
-	return params
+                pass # layer has no params (i.e. dropout)
+        return params
 
 
 def compile_model(model, dataset, optimizer=None):
