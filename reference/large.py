@@ -79,6 +79,7 @@ for epoch in range(1, epochs + 1):
     valid_progress = ProgressBar(range(len(valid_set)))
     for batch in valid_progress:
         perplexity, accuracy = val(batch)
+        perplexity_list.append(perplexity)
         accuracy_list.append(accuracy)
         valid_progress.perplexity = np.mean(perplexity_list)
         valid_progress.accuracy = np.mean(accuracy_list)
