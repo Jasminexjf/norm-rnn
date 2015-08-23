@@ -11,7 +11,7 @@ class ProgressBar(object):
         self.progress = 0
 
     def __str__(self):
-        return '[{}{}] pp({:.2f}, {:.2f}%) time({:.2f})\r'.format(
+        return '[{}{}] pp({:.2f}) acc({:.2f}%) time({:.2f}s)\r'.format(
             '#' * self.progress, '.' * self.remaining,
             self.perplexity, self.accuracy, self.elapsed)
 
