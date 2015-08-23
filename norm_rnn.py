@@ -129,7 +129,7 @@ def compile_model(model, dataset, optimizer=None):
     scaled_cost = cost * dataset.time_steps
    
     # perplexity
-    perplexity = T.exp(cost)
+    perplexity = T.exp(cost + 1e6)
 
     # percent correct
     accuracy = Accuracy()(model(x), y)
@@ -141,6 +141,7 @@ def compile_model(model, dataset, optimizer=None):
         grads = [T.grad(scaled_cost, param) for param in model.params]
         updates = optimizer(model.params, grads)
 
+    # get non-param updates (e.g. LSTM state)
     for layer in model.layers:
         try:
             updates.extend(layer.updates)
