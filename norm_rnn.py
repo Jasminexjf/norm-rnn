@@ -5,8 +5,11 @@ import numpy as np
 
 class CrossEntropy(object):
 
+    def __init__(self, epsilon=1e-6):
+        self.epsilon = epsilon
+
     def __call__(self, x, y):
-        return T.nnet.categorical_crossentropy(x, y).mean()
+        return T.nnet.categorical_crossentropy(x + self.epsilon, y).mean()
 
 
 class Accuracy(object):
@@ -112,8 +115,11 @@ def compile_model(model, dataset, optimizer=None):
     i = T.iscalar()
     givens = {x: X[i], y: Y[i]}
 
-    # grads
-    cost = CrossEntropy()(model(x), y)
+    # scale cost by time_steps to account for differences with torch
+    # https://github.com/skaae/nntools/blob/pentree_recurrent/examples/pentree.py
+    cost = CrossEntropy()(model(x), y) * dataset.time_steps
+
+    # percent correct
     accuracy = Accuracy()(model(x), y)
 
     # updates
