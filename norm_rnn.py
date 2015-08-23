@@ -122,7 +122,11 @@ def compile_model(model, dataset, optimizer=None):
 
     # scale cost by time_steps to account for differences with torch
     # https://github.com/skaae/nntools/blob/pentree_recurrent/examples/pentree.py
-    cost = CrossEntropy()(model(x), y) * dataset.time_steps
+    cost = CrossEntropy()(model(x), y)    
+    scaled_cost = cost = dataset.time_steps
+   
+    # perplexity
+    perplexity = T.exp(cost)
 
     # percent correct
     accuracy = Accuracy()(model(x), y)
@@ -140,6 +144,6 @@ def compile_model(model, dataset, optimizer=None):
         except AttributeError:
             pass
 
-    return theano.function([i], (T.exp(cost), accuracy), None, updates, givens)
+    return theano.function([i], (perplexity, accuracy), None, updates, givens)
 
 
