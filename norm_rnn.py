@@ -129,7 +129,7 @@ def compile_model(model, dataset, optimizer=None):
     scaled_cost = cost * dataset.time_steps
    
     # perplexity
-    perplexity = T.exp(cost + 1e6)
+    perplexity = T.exp(cost)
 
     # percent correct
     accuracy = Accuracy()(model(x), y)
