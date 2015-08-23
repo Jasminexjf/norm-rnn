@@ -9,6 +9,12 @@ class CrossEntropy(object):
         return T.nnet.categorical_crossentropy(x, y).mean()
 
 
+class Accuracy(object):
+
+    def __call__(self, x, y):
+        return T.eq(T.max(x, axis=-1), y).mean()
+
+
 class RMSprop(object):
 
     def __init__(self, lr=2e-3, decay=0.95, epsilon=1e-6):
@@ -99,6 +105,7 @@ def compile_model(model, dataset, optimizer=None):
 
     # grads
     cost = CrossEntropy()(model(x), y)
+    accuracy = Accuracy()(model(x), y)
 
     # updates
     if optimizer is None:
@@ -113,6 +120,6 @@ def compile_model(model, dataset, optimizer=None):
         except AttributeError:
             pass
 
-    return theano.function([i], cost, None, updates, givens)
+    return theano.function([i], accuracy, None, updates, givens)
 
 
