@@ -140,6 +140,6 @@ def compile_model(model, dataset, optimizer=None):
         except AttributeError:
             pass
 
-    return theano.function([i], accuracy, None, updates, givens)
+    return theano.function([i], (T.exp(cost), accuracy), None, updates, givens)
 
 

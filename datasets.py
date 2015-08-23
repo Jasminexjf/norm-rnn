@@ -8,7 +8,7 @@ class PennTreebank(object):
     test_path = 'data/ptb.test.txt'
 
     def __init__(self, batch_size=20, time_steps=20, path=train_path,
-                 tokenizer=str.split, vocab=None):
+                 vocab=None, tokenizer=str.split):
         text = open(path).read()
 
         if tokenizer is not None:
