@@ -14,6 +14,5 @@ def test_sgd():
         assert sgd.iteration.get_value() == i
         f()
 
-        print sgd.lr.get_value()
 
 test_sgd()

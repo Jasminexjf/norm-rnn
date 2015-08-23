@@ -57,8 +57,7 @@ class SGD(object):
                    (self.lr, T.switch(self.iteration % self.decay.every, self.lr, self.lr * self.decay.rate))]
 
         for p, g in zip(params, grads):
-
-            new_p = p - self.lr * g * (self.iteration % 2)
+            new_p = p - self.lr * g
             updates.append((p, new_p))
 
         return updates
