@@ -19,6 +19,12 @@ class Softmax(object):
         return T.nnet.softmax(x.reshape((-1, x.shape[-1])))
 
 
+class Identity(object):
+
+    def __call__(self, x):
+        return x
+
+
 class Linear(object):
 
     def __init__(self, input_size, output_size, activation=Softmax(),

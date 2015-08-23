@@ -33,8 +33,9 @@ model = List([
     LSTM(layer_size, layer_size, weight_init=weight_init),
     Dropout(drop_prob),
     LSTM(layer_size, layer_size, weight_init=weight_init),
+    Linear(layer_size, len(train_set.vocab), activation=Identity(), weight_init=weight_init)
     Dropout(drop_prob),
-    Linear(layer_size, len(train_set.vocab), weight_init=weight_init)
+    Softmax(),
 ])
 
 # initialize shared memory for lstm states
