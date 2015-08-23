@@ -1,5 +1,6 @@
 import theano
 import theano.tensor as T
+import numpy as np
 
 
 class CrossEntropy(object):
@@ -32,20 +33,32 @@ class RMSprop(object):
         return updates
 
 
+class DecayEvery(object):
+
+    # every = batches per epoch * times max_epoch from lstm reference
+    def __init__(self, every=2218 * 4, rate=0.1):
+        self.every = every
+        self.rate = rate
+
+
 class SGD(object):
 
-    def __init__(self, lr=1):
-        self.lr = lr
+    def __init__(self, lr=1, grad_norm=5, decay=DecayEvery()):
+        self.lr = theano.shared(np.cast[theano.config.floatX](lr))
+        self.iteration = theano.shared(1)
+        self.grad_norm = grad_norm
+        self.decay = decay
 
     def __call__(self, params, grads):
-        # norm clipping
         norm = T.sqrt(sum([T.sum(g ** 2) for g in grads]))
-        grads = [self.clip_norm(g, 1, norm) for g in grads]
+        grads = [self.clip_norm(g, self.grad_norm, norm) for g in grads]
 
-        updates = []
+        updates = [(self.iteration, self.iteration + 1),
+                   (self.lr, T.switch(self.iteration % self.decay.every, self.lr, self.lr * self.decay.rate))]
 
         for p, g in zip(params, grads):
-            new_p = p - self.lr * g
+
+            new_p = p - self.lr * g * (self.iteration % 2)
             updates.append((p, new_p))
 
         return updates
@@ -102,3 +115,5 @@ def compile_model(model, dataset, update=True):
             pass
 
     return theano.function([i], cost, None, updates, givens)
+
+
