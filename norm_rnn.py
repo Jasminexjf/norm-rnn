@@ -135,7 +135,7 @@ def compile_model(model, dataset, optimizer=None):
     if optimizer is None:
         updates = []
     else:
-        grads = [T.grad(cost, param) for param in model.params]
+        grads = [T.grad(scaled_cost, param) for param in model.params]
         updates = optimizer(model.params, grads)
 
     for layer in model.layers:
