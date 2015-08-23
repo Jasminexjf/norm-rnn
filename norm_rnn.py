@@ -17,10 +17,12 @@ class Accuracy(object):
 
 class RMSprop(object):
 
-    def __init__(self, lr=2e-3, decay=0.95, epsilon=1e-6):
+    def __init__(self, lr=2e-3, decay=0.95, epsilon=1e-6, grad_norm=GradientNorm(), lr_decay=Decay()):
         self.lr = lr
         self.decay = decay
         self.epsilon = epsilon
+	self.grad_norm = grad_norm
+	self.lr_decay = lr_decay
 
     def __call__(self, params, grads):
 

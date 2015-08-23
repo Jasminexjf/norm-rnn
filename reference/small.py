@@ -32,10 +32,11 @@ for layer in model.layers:
 
 # initialize optimizer
 decay = DecayEvery(4 * len(train_set), 0.5)
-sgd = SGD(lr=1, grad_norm=10, decay=decay)
+#optimizer = SGD(lr=1, grad_norm=10, decay=decay)
+optimizer = RMS(lr=1, grad_norm=10, decay=decay)
 
 # compile theano functions
-fit = compile_model(model, train_set, sgd)
+fit = compile_model(model, train_set, optimizer)
 val = compile_model(model, valid_set)
 
 # train
