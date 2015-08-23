@@ -38,7 +38,7 @@ for layer in model.layers:
 # initialize optimizer
 grad_norm = GradientNorm(max_norm)
 decay = DecayEvery(decay_epoch * len(train_set), decay_rate)
-sgd = SGD(learning_rate, grad_norm, decay)
+optimizer = SGD(learning_rate, grad_norm, decay)
 
 # compile theano functions
 fit = compile_model(model, train_set, optimizer)
