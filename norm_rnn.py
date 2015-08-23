@@ -15,32 +15,6 @@ class Accuracy(object):
         return T.eq(T.argmax(x, axis=-1), y).mean()
 
 
-class RMSprop(object):
-
-    def __init__(self, lr=2e-3, decay=0.95, epsilon=1e-6, grad_norm=GradientNorm(), lr_decay=Decay()):
-        self.lr = lr
-        self.decay = decay
-        self.epsilon = epsilon
-	self.grad_norm = grad_norm
-	self.lr_decay = lr_decay
-
-    def __call__(self, params, grads):
-
-        print 'add gradient clipping!'
-
-        accumulators = [theano.shared(p.get_value() * 0) for p in params]
-        updates = []
-
-        for p, g, a in zip(params, grads, accumulators):
-            new_a = self.decay * a + (1 - self.decay) * g ** 2
-            updates.append((a, new_a))
-
-            new_p = p - self.lr * g / T.sqrt(new_a + self.epsilon)
-            updates.append((p, new_p))
-
-        return updates
-
-
 class DecayEvery(object):
 
     # every = batches per epoch * times max_epoch from lstm reference
@@ -80,6 +54,35 @@ class SGD(object):
 
         for p, g in zip(params, grads):
             new_p = p - self.lr * g
+            updates.append((p, new_p))
+
+        return updates
+
+
+class RMS(object):
+
+    def __init__(self, lr=2e-3, rho=0.95, epsilon=1e-6, grad_norm=GradientNorm(), decay=DecayEvery()):
+        self.lr = theano.shared(np.cast[theano.config.floatX](lr))
+        self.iteration = theano.shared(1)
+
+        self.rho = rho
+        self.epsilon = epsilon
+        self.grad_norm = grad_norm
+        self.decay = decay
+
+    def __call__(self, params, grads):
+        grads = self.grad_norm(grads)
+
+        updates = [(self.iteration, self.iteration + 1),
+                   (self.lr, T.switch(self.iteration % self.decay.every, self.lr, self.lr * self.decay.rate))]
+
+        accumulators = [theano.shared(p.get_value() * 0) for p in params]
+
+        for p, g, a in zip(params, grads, accumulators):
+            new_a = self.rho * a + (1 - self.rho) * g ** 2
+            updates.append((a, new_a))
+
+            new_p = p - self.lr * g / T.sqrt(new_a + self.epsilon)
             updates.append((p, new_p))
 
         return updates
