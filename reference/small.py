@@ -4,6 +4,7 @@ np.random.seed(0)
 from datasets import PennTreebank
 from norm_rnn import List
 from norm_rnn import compile_model
+from norm_rnn import SGD, DecayEvery
 from utils import ProgressBar
 from layers import *
 
@@ -11,7 +12,7 @@ from layers import *
 train_set = PennTreebank()
 valid_set = PennTreebank(path=PennTreebank.valid_path, vocab=train_set.vocab)
 
-# sizes
+# hyper parameters
 vocab_size = len(train_set.vocab)
 layer_size = 200
 
@@ -29,9 +30,13 @@ for layer in model.layers:
     if isinstance(layer, LSTM):
         layer.set_state(train_set.batch_size)
 
+# initialize optimizer
+decay = DecayEvery(4 * len(train_set), 0.5)
+sgd = SGD(lr=1, grad_norm=10, decay=decay)
+
 # compile theano functions
-fit = compile_model(model, train_set, update=True)
-val = compile_model(model, valid_set, update=False)
+fit = compile_model(model, train_set, sgd)
+val = compile_model(model, valid_set)
 
 # train
 for epoch in range(1, 15):

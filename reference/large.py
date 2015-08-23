@@ -46,9 +46,6 @@ fit = compile_model(model, train_set, sgd)
 def not_dropout(layer): return not isinstance(layer, Dropout)
 
 model.layers = filter(not_dropout, model.layers)
-
-print model.layers
-
 val = compile_model(model, valid_set, None)
 
 # train
