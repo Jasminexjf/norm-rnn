@@ -12,7 +12,7 @@ class CrossEntropy(object):
 class Accuracy(object):
 
     def __call__(self, x, y):
-        return T.eq(T.max(x, axis=-1), y).mean()
+        return T.eq(T.argmax(x, axis=-1), y).mean()
 
 
 class RMSprop(object):
