@@ -86,7 +86,7 @@ class List(object):
         return params
 
 
-def compile_model(model, dataset, update=True):
+def compile_model(model, dataset, optimizer=None):
     x = T.imatrix()
     y = T.ivector()
 
@@ -101,11 +101,11 @@ def compile_model(model, dataset, update=True):
     cost = CrossEntropy()(model(x), y)
 
     # updates
-    if update:
-        grads = [T.grad(cost, param) for param in model.params]
-        updates = SGD()(model.params, grads)
-    else:
+    if optimizer is None:
         updates = []
+    else:
+        grads = [T.grad(cost, param) for param in model.params]
+        updates = optimizer(model.params, grads)
 
     for layer in model.layers:
         try:

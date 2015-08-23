@@ -58,11 +58,11 @@ def test_lstm():
 
 
 def test_batch_norm():
-    from layers import BatchNormalization
+    from layers import BN
 
     for axis in [0, 1, 2]:
         x = T.tensor3()
-        f = theano.function([x], BatchNormalization(input_size, axis)(x))
+        f = theano.function([x], BN(input_size, axis)(x))
 
         x = np.ones((batch_size, time_steps, input_size))
         assert f(x).shape == (batch_size, time_steps, input_size)
