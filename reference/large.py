@@ -53,17 +53,22 @@ for epoch in range(1, 15):
     print 'epoch({})'.format(epoch)
 
     # fit
-    train_errors = []
+    perplexity_list = []
+    accuracy_list = []
     train_progress = ProgressBar(range(len(train_set)))
     for batch in train_progress:
-        error = fit(batch)
-        train_errors.append(error)
-        train_progress.cost = np.mean(train_errors)
+        perplexity, accuracy = fit(batch)
+        perplexity_list.append(perplexity)
+        accuracy_list.append(accuracy)
+        train_progress.perplexity = np.mean(perplexity_list)
+        train_progress.accuracy = np.mean(accuracy_list)
 
     # validate
-    valid_errors = []
+    perplexity_list = []
+    accuracy_list = []
     valid_progress = ProgressBar(range(len(valid_set)))
     for batch in valid_progress:
-        error = val(batch)
-        valid_errors.append(error)
-        valid_progress.cost = np.mean(valid_errors)
+        perplexity, accuracy = val(batch)
+        accuracy_list.append(accuracy)
+        valid_progress.perplexity = np.mean(perplexity_list)
+        valid_progress.accuracy = np.mean(accuracy_list)

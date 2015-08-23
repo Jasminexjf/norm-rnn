@@ -11,12 +11,14 @@ class ProgressBar(object):
         self.progress = 0
 
     def __str__(self):
-        return '[{}{}] cost({:.2f}) time({:.2f})\r'.format(
-            '#' * self.progress, '.' * self.remaining, self.cost, self.elapsed)
+        return '[{}{}] pp({:.2f}, {:.2f}%) time({:.2f})\r'.format(
+            '#' * self.progress, '.' * self.remaining,
+            self.perplexity, self.accuracy, self.elapsed)
 
     def __iter__(self):
         self.begin = timeit.default_timer()
-        self.cost = 0
+        self.perplexity = 0
+        self.accuracy = 0
         self.elapsed = 0
         self.display(0)
 
