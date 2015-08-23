@@ -16,21 +16,25 @@ max_norm = 10
 decay_epoch = 14
 epochs = 55
 drop_prob = 0.65
+init_range = 0.04
 
 # load data
 train_set = PennTreebank(batch_size, time_steps)
 valid_set = PennTreebank(batch_size, time_steps,
                          PennTreebank.valid_path, train_set.vocab)
 
+# weight init
+weight_init = Uniform(init_range)
+
 # config model
 model = List([
-    Embed(len(train_set.vocab), layer_size),
+    Embed(len(train_set.vocab), layer_size, weight_init=weight_init),
     Dropout(drop_prob),
-    LSTM(layer_size, layer_size),
+    LSTM(layer_size, layer_size, weight_init=weight_init),
     Dropout(drop_prob),
-    LSTM(layer_size, layer_size),
+    LSTM(layer_size, layer_size, weight_init=weight_init),
     Dropout(drop_prob),
-    Linear(layer_size, len(train_set.vocab))
+    Linear(layer_size, len(train_set.vocab), weight_init=weight_init)
 ])
 
 # initialize shared memory for lstm states
