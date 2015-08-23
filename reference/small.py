@@ -19,7 +19,7 @@ epochs = 15
 # load data
 train_set = PennTreebank(batch_size, time_steps)
 valid_set = PennTreebank(batch_size, time_steps,
-    PennTreebank.valid_path, train_set.vocab)
+                         PennTreebank.valid_path, train_set.vocab)
 
 # config model
 model = List([
