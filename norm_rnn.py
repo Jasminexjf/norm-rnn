@@ -49,17 +49,31 @@ class DecayEvery(object):
         self.rate = np.cast[theano.config.floatX](rate)
 
 
+class GradientNorm(object):
+
+    def __init__(self, max_norm=5):
+        self.max_norm = max_norm
+
+    def __call__(self, grads):
+        norm = T.sqrt(sum([T.sum(g ** 2) for g in grads]))
+        return [self.clip_norm(g, self.max_norm, norm) for g in grads]
+
+    def clip_norm(self, g, c, n):
+        if c > 0:
+            g = T.switch(T.ge(n, c), g * c / n, g)
+        return g
+
+
 class SGD(object):
 
-    def __init__(self, lr=1, grad_norm=5, decay=DecayEvery()):
+    def __init__(self, lr=1, grad_norm=GradientNorm(), decay=DecayEvery()):
         self.lr = theano.shared(np.cast[theano.config.floatX](lr))
         self.iteration = theano.shared(1)
         self.grad_norm = grad_norm
         self.decay = decay
 
     def __call__(self, params, grads):
-        norm = T.sqrt(sum([T.sum(g ** 2) for g in grads]))
-        grads = [self.clip_norm(g, self.grad_norm, norm) for g in grads]
+        grads = self.grad_norm(grads)
 
         updates = [(self.iteration, self.iteration + 1),
                    (self.lr, T.switch(self.iteration % self.decay.every, self.lr, self.lr * self.decay.rate))]
@@ -69,11 +83,6 @@ class SGD(object):
             updates.append((p, new_p))
 
         return updates
-
-    def clip_norm(self, g, c, n):
-        if c > 0:
-            g = T.switch(T.ge(n, c), g * c / n, g)
-        return g
 
 
 class List(object):

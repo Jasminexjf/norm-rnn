@@ -2,10 +2,8 @@ import numpy as np
 np.random.seed(0)
 
 from datasets import PennTreebank
-from norm_rnn import List
-from norm_rnn import compile_model
-from norm_rnn import SGD, DecayEvery
 from utils import ProgressBar
+from norm_rnn import *
 from layers import *
 
 # load data
@@ -31,9 +29,10 @@ for layer in model.layers:
         layer.set_state(train_set.batch_size)
 
 # initialize optimizer
+grad_norm = GradientNorm(max_norm=5)
 decay = DecayEvery(4 * len(train_set), 0.5)
 #optimizer = SGD(lr=1, grad_norm=10, decay=decay)
-optimizer = RMS(lr=1, grad_norm=10, decay=decay)
+optimizer = RMS(lgrad_norm=10, decay=decay)
 
 # compile theano functions
 fit = compile_model(model, train_set, optimizer)
