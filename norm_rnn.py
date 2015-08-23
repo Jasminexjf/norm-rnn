@@ -36,9 +36,9 @@ class RMSprop(object):
 class DecayEvery(object):
 
     # every = batches per epoch * times max_epoch from lstm reference
-    def __init__(self, every=2218 * 4, rate=0.1):
+    def __init__(self, every=2218 * 4, rate=0.5):
         self.every = every
-        self.rate = rate
+        self.rate = np.cast[theano.config.floatX](rate)
 
 
 class SGD(object):

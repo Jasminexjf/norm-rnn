@@ -15,6 +15,7 @@ valid_set = PennTreebank(path=PennTreebank.valid_path, vocab=train_set.vocab)
 model = List([
     Embed(9998, 200),
     LSTM(200, 200),
+    LSTM(200, 200),
     Linear(200, 9998)
 ])
 
@@ -29,7 +30,7 @@ fit = compile_model(model, train_set, update=True)
 val = compile_model(model, valid_set, update=False)
 
 # train
-for epoch in range(1, 10):
+for epoch in range(1, 15):
     print 'epoch({})'.format(epoch)
 
     # fit
