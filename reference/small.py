@@ -18,7 +18,7 @@ epochs = 15
 
 # load data
 train_set = PennTreebank(batch_size, time_steps)
-valid_set = PennTreebank(1, time_steps,
+valid_set = PennTreebank(batch_size, time_steps,
                          PennTreebank.valid_path, train_set.vocab)
 
 # config model
@@ -33,7 +33,7 @@ model = List([
 # (find a way to push this into the layer)
 for layer in model.layers:
     if isinstance(layer, LSTM):
-        layer.set_state(batch_size)
+        layer.set_state(train_set.batch_size)
 
 # initialize optimizer
 grad_norm = GradientNorm(max_norm)
@@ -59,11 +59,6 @@ for epoch in range(1, epochs + 1):
         train_progress.perplexity = np.mean(perplexity_list)
         train_progress.accuracy = np.mean(accuracy_list)
 
-    # reset lstm layers
-    for layer in model.layers:
-        if isinstance(layer, LSTM):
-            layer.set_state(1)
-
     # validate
     perplexity_list = []
     accuracy_list = []
@@ -78,4 +73,4 @@ for epoch in range(1, epochs + 1):
     # reset lstm layers
     for layer in model.layers:
         if isinstance(layer, LSTM):
-            layer.set_state(batch_size)
+            layer.set_state(train_set.batch_size)
