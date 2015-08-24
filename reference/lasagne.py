@@ -23,10 +23,9 @@ dataset = LasagneLoader()
 X_train, y_train = dataset()
 X_valid, y_valid = dataset(False)
 
-vocab_size = len(dataset.vocab_idx)
+vocab_size = len(dataset.vocab_map)
 train_batches = len(X_train) / batch_size
 valid_batches = len(X_valid) / batch_size
-
 
 # config model
 model = List([

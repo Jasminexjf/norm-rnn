@@ -156,11 +156,11 @@ def compile_model_lasagne(model, (X, Y), optimizer=None):
     y = T.ivector()
 
     X = theano.shared(X)
-    Y = theano.shared(Y)
+    Y = theano.shared(Y.reshape(-1))
 
     # givens
     i = T.iscalar()
-    givens = {x: X[i * 20:(i+1) * 20], y: Y[i * 20:(i+1) * 20]}
+    givens = {x: X[i * 20:(i+1) * 20], y: Y[i * 20 * 20:(i+1) * 20 * 20]}
 
     # scale cost by time_steps to account for differences with torch
     # https://github.com/skaae/nntools/blob/pentree_recurrent/examples/pentree.py

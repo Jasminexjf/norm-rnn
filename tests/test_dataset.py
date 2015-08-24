@@ -131,5 +131,3 @@ def test_penn_treebank():
     ptb = PennTreebank(path='../data/ptb.train.txt')
 
     print ptb.X[0][0]
-
-test_penn_treebank()
