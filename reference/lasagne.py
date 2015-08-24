@@ -17,7 +17,7 @@ max_norm = 5
 decay_rate = 0.5
 decay_epoch = 4
 learning_rate = 1
-epochs = 15
+epochs = 5
 
 # load dataset
 dataset = LasagneLoader()
@@ -43,7 +43,7 @@ for layer in model.layers:
 # initialize optimizer
 grad_norm = GradientNorm(max_norm)
 decay = DecayEvery(decay_epoch * train_batches, decay_rate)
-optimizer = SGD(learning_rate, grad_norm, decay)
+optimizer = RMS(learning_rate, grad_norm, decay)
 
 # compile theano functions
 fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
