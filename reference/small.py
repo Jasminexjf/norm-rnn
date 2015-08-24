@@ -14,12 +14,14 @@ max_norm = 5
 decay_rate = 0.5
 decay_epoch = 4
 learning_rate = 1
-epochs = 15
+epochs = 6
 
 # load data
 train_set = PennTreebank(batch_size, time_steps)
 valid_set = PennTreebank(batch_size, time_steps,
                          PennTreebank.valid_path, train_set.vocab)
+test_set = PennTreebank(2, time_steps,
+			PennTreebank.test_path, train_set.vocab)
 
 # config model
 model = List([
@@ -74,3 +76,23 @@ for epoch in range(1, epochs + 1):
     for layer in model.layers:
         if isinstance(layer, LSTM):
             layer.set_state(train_set.batch_size)
+
+
+# reset lstm layers
+for layer in model.layers:
+    if isinstance(layer, LSTM):
+        layer.set_state(2)
+
+val = compile_model(model, test_set)
+
+# validate
+perplexity_list = []
+accuracy_list = []
+valid_progress = ProgressBar(range(len(test_set)))
+for batch in valid_progress:
+    perplexity, accuracy = val(batch)
+    perplexity_list.append(perplexity)
+    accuracy_list.append(accuracy)
+    valid_progress.perplexity = np.mean(perplexity_list)
+    valid_progress.accuracy = np.mean(accuracy_list)
+
