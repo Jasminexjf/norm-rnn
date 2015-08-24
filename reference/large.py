@@ -20,7 +20,7 @@ init_range = 0.04
 
 # load data
 train_set = PennTreebank(batch_size, time_steps)
-valid_set = PennTreebank(batch_size, time_steps,
+valid_set = PennTreebank(1, time_steps,
                          PennTreebank.valid_path, train_set.vocab)
 
 # weight init
@@ -33,7 +33,7 @@ model = List([
     LSTM(layer_size, layer_size, weight_init=weight_init),
     Dropout(drop_prob),
     LSTM(layer_size, layer_size, weight_init=weight_init),
-    Linear(layer_size, len(train_set.vocab), activation=Identity(), weight_init=weight_init)
+    Linear(layer_size, len(train_set.vocab), activation=Identity(), weight_init=weight_init),
     Dropout(drop_prob),
     Softmax(),
 ])
@@ -42,7 +42,7 @@ model = List([
 # (need to find a way to push this into the layer)
 for layer in model.layers:
     if isinstance(layer, LSTM):
-        layer.set_state(train_set.batch_size)
+        layer.set_state(batch_size)
 
 # initialize optimizer
 grad_norm = GradientNorm(max_norm)
@@ -73,6 +73,11 @@ for epoch in range(1, epochs + 1):
         train_progress.perplexity = np.mean(perplexity_list)
         train_progress.accuracy = np.mean(accuracy_list)
 
+    # reset lstm layers
+    for layer in model.layers:
+        if isinstance(layer, LSTM):
+            layer.set_state(1)
+
     # validate
     perplexity_list = []
     accuracy_list = []
@@ -87,4 +92,4 @@ for epoch in range(1, epochs + 1):
     # reset lstm layers
     for layer in model.layers:
         if isinstance(layer, LSTM):
-            layer.set_state(train_set.batch_size)
+            layer.set_state(batch_size)
