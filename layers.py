@@ -136,18 +136,49 @@ class LSTM(object):
 
 class BN(object):
 
-    def __init__(self, input_size, axis=1, epsilon=1e-6):
-        self.gamma = theano.shared(np.asarray(np.ones(input_size), dtype=np.float32))
-        self.beta = theano.shared(np.asarray(np.zeros(input_size), dtype=np.float32))
+    def __init__(self, input_size, batch_size=None, time_steps=None, momentum=0.9, epsilon=1e-6):
+        self.gamma = theano.shared(np.asarray(np.ones(input_size), np.float32))
+        self.beta = theano.shared(np.asarray(np.zeros(input_size), np.float32))
         self.params = [self.gamma, self.beta]
 
-        self.axis = axis
+        # if dimensions are None, we normalize over them
+        # the resuling mean shape is all dimensions that were specified
+        # (e.g. to get standard batch-norm on a sequence, we need to
+        #  specify time-steps since our shared running averages needs this
+        #  to be initialized.)
+        running_shape = ()
+        self.axes = ()
+        if batch_size is not None:
+            running_shape += (batch_size, )
+        else:
+            self.axes += (0, )
+
+
+        if time_steps is not None:
+            running_shape += (time_steps, )
+        else:
+            self.axes += (1, )
+
+        running_shape += (input_size, )
+
+        self.running_mean = theano.shared(np.zeros(running_shape, np.float32))
+        self.running_std = theano.shared(np.zeros(running_shape, np.float32))
+
+        self.momentum = momentum
         self.epsilon = epsilon
 
     def __call__(self, x):
-        m = x.mean(axis=self.axis, keepdims=True)
-        std = x.std(axis=self.axis, keepdims=True)
-        x = (x - m) / (std + self.epsilon)
+        # mini-batch statistics
+        m = x.mean(axis=self.axes)
+        std = std = T.mean((x - m) ** 2 + self.epsilon, axis=self.axes) ** 0.5
+
+        # updates for shared state
+        mean_update = self.momentum * self.running_mean + (1-self.momentum) * m
+        std_update = self.momentum * self.running_std + (1-self.momentum) * std
+        self.updates = [(self.running_mean, mean_update), (self.running_std, std_update)]
+
+        # normalize
+        x = (x - self.running_mean) / (self.running_std + self.epsilon)
         return self.gamma * x + self.beta
 
 

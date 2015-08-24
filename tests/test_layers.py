@@ -59,14 +59,18 @@ def test_lstm():
 
 def test_batch_norm():
     from layers import BN
+    bn = BN(input_size, time_steps=time_steps)
 
-    for axis in [0, 1, 2]:
-        x = T.tensor3()
-        f = theano.function([x], BN(input_size, axis)(x))
+    x = T.tensor3()
+    f = theano.function([x], bn(x), updates=bn.updates)
 
-        x = np.ones((batch_size, time_steps, input_size))
-        assert f(x).shape == (batch_size, time_steps, input_size)
+    print bn.running_mean.get_value().shape
+    print bn.axes
 
+    x = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
+    assert f(x).shape == (batch_size, time_steps, input_size)
+
+    print bn.running_mean.get_value()
 
 def test_norm_layers():
     from layers import NormalizedLSTM, HiddenNormalizedLSTM
@@ -85,4 +89,4 @@ def test_norm_layers():
             assert f(x).shape == (batch_size, time_steps, layer_size)
 
 
-test_lstm()
+test_batch_norm()
