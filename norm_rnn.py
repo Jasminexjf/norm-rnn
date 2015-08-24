@@ -151,3 +151,41 @@ def compile_model(model, dataset, optimizer=None):
     return theano.function([i], (perplexity, accuracy), None, updates, givens)
 
 
+def compile_model_lasagne(model, (X, Y), optimizer=None):
+    x = T.imatrix()
+    y = T.ivector()
+
+    X = theano.shared(X)
+    Y = theano.shared(Y)
+
+    # givens
+    i = T.iscalar()
+    givens = {x: X[i * 20:(i+1) * 20], y: Y[i * 20:(i+1) * 20]}
+
+    # scale cost by time_steps to account for differences with torch
+    # https://github.com/skaae/nntools/blob/pentree_recurrent/examples/pentree.py
+    cost = CrossEntropy()(model(x), y)
+    scaled_cost = cost * 20
+
+    # perplexity
+    perplexity = T.exp(cost)
+
+    # percent correct
+    accuracy = Accuracy()(model(x), y)
+
+    # updates
+    if optimizer is None:
+        updates = []
+    else:
+        grads = [T.grad(scaled_cost, param) for param in model.params]
+        updates = optimizer(model.params, grads)
+
+    # get non-param updates (e.g. LSTM state)
+    for layer in model.layers:
+        try:
+            updates.extend(layer.updates)
+        except AttributeError:
+            pass
+
+    return theano.function([i], (perplexity, accuracy), None, updates, givens)
+
