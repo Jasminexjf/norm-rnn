@@ -87,7 +87,7 @@ for model_name, model in models.iteritems():
         accuracy_list = []
         valid_progress = ProgressBar(range(valid_batches))
         for batch in valid_progress:
-        perplexity, accuracy = val(batch)
+            perplexity, accuracy = val(batch)
             perplexity_list.append(perplexity)
             accuracy_list.append(accuracy)
             valid_progress.perplexity = np.mean(perplexity_list)
