@@ -67,6 +67,11 @@ for epoch in range(1, epochs + 1):
         train_progress.perplexity = np.mean(perplexity_list)
         train_progress.accuracy = np.mean(accuracy_list)
 
+    # reset lstm layers
+    for layer in model.layers:
+        if isinstance(layer, LSTM):
+            layer.set_state(batch_size)
+
     # validate
     perplexity_list = []
     accuracy_list = []
