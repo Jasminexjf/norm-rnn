@@ -137,8 +137,8 @@ class LSTM(object):
 class BN(object):
 
     def __init__(self, input_size, batch_size=None, time_steps=None, momentum=0.9, epsilon=1e-6):
-        self.gamma = theano.shared(np.asarray(np.ones(input_size), np.float32))
-        self.beta = theano.shared(np.asarray(np.zeros(input_size), np.float32))
+        self.gamma = theano.shared(np.ones(input_size, dtype=np.float32))
+        self.beta = theano.shared(np.zeros(input_size, dtype=np.float32))
         self.params = [self.gamma, self.beta]
 
         # if dimensions are None, we normalize over them
@@ -152,7 +152,6 @@ class BN(object):
             running_shape += (batch_size, )
         else:
             self.axes += (0, )
-
 
         if time_steps is not None:
             running_shape += (time_steps, )
