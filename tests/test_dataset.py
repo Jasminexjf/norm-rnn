@@ -108,22 +108,28 @@ def traindata(model_seq_len, batch_size, vocab_map, vocab_idx):
     return reorder(x, batch_size, model_seq_len)
 
 
+# lasagne
 def validdata(model_seq_len, batch_size, vocab_map, vocab_idx):
     x = load_data("ptb.valid.txt.gz", vocab_map, vocab_idx)
     return reorder(x, batch_size, model_seq_len)
 
 
+# lasagne
+def testdata(model_seq_len, batch_size, vocab_map, vocab_idx):
+    x = load_data("ptb.test.txt.gz", vocab_map, vocab_idx)
+    return reorder(x, batch_size, model_seq_len)
+
+
+# lasagne
 class LasagneLoader():
 
     def __init__(self):
         self.vocab_map = {}
         self.vocab_idx = [0]
 
-    def __call__(self, train=True):
-        if train:
-            return traindata(20, 20, self.vocab_map, self.vocab_idx)
-        else:
-            return validdata(20, 20, self.vocab_map, self.vocab_idx)
+        self.X_train, self.y_train = traindata(20, 20, self.vocab_map, self.vocab_idx)
+        self.X_valid, self.y_valid = validdata(20, 20, self.vocab_map, self.vocab_idx)
+        self.X_test, self.y_test = testdata(20, 20, self.vocab_map, self.vocab_idx)
 
 
 def test_penn_treebank():

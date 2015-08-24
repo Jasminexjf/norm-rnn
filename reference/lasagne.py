@@ -17,15 +17,14 @@ max_norm = 5
 decay_rate = 0.5
 decay_epoch = 4
 learning_rate = 1
-epochs = 6
+epochs = 15
 
+# load dataset
 dataset = LasagneLoader()
-X_train, y_train = dataset()
-X_valid, y_valid = dataset(False)
-
 vocab_size = len(dataset.vocab_map)
-train_batches = len(X_train) / batch_size
-valid_batches = len(X_valid) / batch_size
+train_batches = len(dataset.X_train) / batch_size
+valid_batches = len(dataset.X_valid) / batch_size
+test_batches = len(dataset.X_test) / batch_size
 
 # config model
 model = List([
@@ -47,8 +46,8 @@ decay = DecayEvery(decay_epoch * train_batches, decay_rate)
 optimizer = SGD(learning_rate, grad_norm, decay)
 
 # compile theano functions
-fit = compile_model_lasagne(model, (X_train, y_train), optimizer)
-val = compile_model_lasagne(model, (X_valid, y_valid))
+fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
+val = compile_model_lasagne(model, (dataset.X_valid, dataset.y_valid))
 
 # train
 for epoch in range(1, epochs + 1):
@@ -80,3 +79,44 @@ for epoch in range(1, epochs + 1):
     for layer in model.layers:
         if isinstance(layer, LSTM):
             layer.set_state(batch_size)
+
+
+# reset lstm layers
+for layer in model.layers:
+    if isinstance(layer, LSTM):
+        layer.set_state(batch_size)
+
+print 'test type(static)'
+val = compile_model_lasagne(model, (dataset.X_test, dataset.y_test))
+
+# static test validation
+perplexity_list = []
+accuracy_list = []
+test_progress = ProgressBar(range(test_batches))
+for batch in test_progress:
+    perplexity, accuracy = val(batch)
+    perplexity_list.append(perplexity)
+    accuracy_list.append(accuracy)
+    test_progress.perplexity = np.mean(perplexity_list)
+    test_progress.accuracy = np.mean(accuracy_list)
+
+
+# reset lstm layers
+for layer in model.layers:
+    if isinstance(layer, LSTM):
+        layer.set_state(batch_size)
+
+
+print 'test type(dynamic)'
+fit = compile_model_lasagne(model, (dataset.X_test, dataset.y_test), optimizer)
+
+# dynamic test validation
+perplexity_list = []
+accuracy_list = []
+test_progress = ProgressBar(range(test_batches))
+for batch in test_progress:
+    perplexity, accuracy = val(batch)
+    perplexity_list.append(perplexity)
+    accuracy_list.append(accuracy)
+    test_progress.perplexity = np.mean(perplexity_list)
+    test_progress.accuracy = np.mean(accuracy_list)
