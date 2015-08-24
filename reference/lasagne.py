@@ -64,27 +64,30 @@ for epoch in range(1, epochs + 1):
         train_progress.perplexity = np.mean(perplexity_list)
         train_progress.accuracy = np.mean(accuracy_list)
 
-    # validate
-    perplexity_list = []
-    accuracy_list = []
-    valid_progress = ProgressBar(range(valid_batches))
-    for batch in valid_progress:
-	perplexity, accuracy = val(batch)
-        perplexity_list.append(perplexity)
-        accuracy_list.append(accuracy)
-        valid_progress.perplexity = np.mean(perplexity_list)
-        valid_progress.accuracy = np.mean(accuracy_list)
-
-    # reset lstm layers
+    # reset LSTM layers
     for layer in model.layers:
         if isinstance(layer, LSTM):
             layer.set_state(batch_size)
 
 
-# reset lstm layers
-for layer in model.layers:
-    if isinstance(layer, LSTM):
-        layer.set_state(batch_size)
+    # validate
+    perplexity_list = []
+    accuracy_list = []
+    valid_progress = ProgressBar(range(valid_batches))
+    for batch in valid_progress:
+        perplexity, accuracy = val(batch)
+        perplexity_list.append(perplexity)
+        accuracy_list.append(accuracy)
+        valid_progress.perplexity = np.mean(perplexity_list)
+        valid_progress.accuracy = np.mean(accuracy_list)
+
+    # reset LSTM and BN layers
+    for layer in model.layers:
+        if isinstance(layer, LSTM):
+            layer.set_state(batch_size)
+        if isinstance(layer, BN):
+            layer.reset_state()
+
 
 print 'test type(static)'
 val = compile_model_lasagne(model, (dataset.X_test, dataset.y_test))
@@ -101,10 +104,12 @@ for batch in test_progress:
     test_progress.accuracy = np.mean(accuracy_list)
 
 
-# reset lstm layers
+# reset LSTM and BN layers
 for layer in model.layers:
     if isinstance(layer, LSTM):
         layer.set_state(batch_size)
+    if isinstance(layer, BN):
+        layer.reset_state()
 
 
 print 'test type(dynamic)'
