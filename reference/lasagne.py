@@ -68,9 +68,9 @@ for epoch in range(1, epochs + 1):
     # validate
     perplexity_list = []
     accuracy_list = []
-    valid_progress = ProgressBar(range(train_batches))
+    valid_progress = ProgressBar(range(valid_batches))
     for batch in valid_progress:
-        perplexity, accuracy = val(batch)
+	perplexity, accuracy = val(batch)
         perplexity_list.append(perplexity)
         accuracy_list.append(accuracy)
         valid_progress.perplexity = np.mean(perplexity_list)
