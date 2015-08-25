@@ -38,9 +38,6 @@ train_batches = len(dataset.X_train) / batch_size
 valid_batches = len(dataset.X_valid) / batch_size
 test_batches = len(dataset.X_test) / batch_size
 
-# to test plotly
-train_batches = valid_batches = test_batches = 10
-
 # models
 models = {
     'Without Batch Normalization':
