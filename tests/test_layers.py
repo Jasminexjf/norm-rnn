@@ -59,34 +59,20 @@ def test_lstm():
 
 def test_batch_norm():
     from layers import BN
-    bn = BN(input_size, time_steps=time_steps)
+    bn = BN(input_size)
 
     x = T.tensor3()
-    f = theano.function([x], bn(x), updates=bn.updates)
-
-    print bn.running_mean.get_value().shape
-    print bn.axes
+    f = theano.function([x], bn(x))
 
     x = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
-    assert f(x).shape == (batch_size, time_steps, input_size)
+    x[1] *= 2
 
-    print bn.running_mean.get_value()
+    bn = (x - x.mean(0)) / (x.std(0))
+    assert np.allclose(f(x), bn)
 
-def test_norm_layers():
-    from layers import NormalizedLSTM, HiddenNormalizedLSTM
-    from layers import NonGateNormalizedLSTM, NonGateHiddenNormalizedLSTM
-    from layers import PreActNormalizedLSTM, NonGatePreActNormalizedLSTM
 
-    for layer in [NormalizedLSTM, HiddenNormalizedLSTM,
-                  NonGateNormalizedLSTM, NonGateHiddenNormalizedLSTM,
-                  PreActNormalizedLSTM, NonGatePreActNormalizedLSTM]:
-
-        for axis in [0, 1]:
-            x = T.tensor3()
-            f = theano.function([x], layer(input_size, layer_size, norm_axis=axis)(x))
-
-            x = np.ones((batch_size, time_steps, input_size))
-            assert f(x).shape == (batch_size, time_steps, layer_size)
+def test_batch_norm_lstm():
+    pass
 
 
 test_batch_norm()
