@@ -57,7 +57,7 @@ for model_name, model in models.iteritems():
             layer.set_state(batch_size)
 
     # initialize optimizer
-    grad_norm = GradientNorm(max_norm)
+    grad_norm = MaxNorm(max_norm)
     decay = DecayEvery(decay_epoch * len(train_set), decay_rate)
     optimizer = SGD(learning_rate, grad_norm, decay)
 

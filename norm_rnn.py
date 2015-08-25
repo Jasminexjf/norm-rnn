@@ -26,7 +26,7 @@ class DecayEvery(object):
         self.rate = np.cast[theano.config.floatX](rate)
 
 
-class GradientNorm(object):
+class MaxNorm(object):
 
     def __init__(self, max_norm=5):
         self.max_norm = max_norm
@@ -41,16 +41,25 @@ class GradientNorm(object):
         return g
 
 
+class Clip(object):
+
+    def __init__(self, clip=5):
+        self.clip = clip
+
+    def __call__(self, grads):
+        return [T.clip(g, -self.clip, self.clip) for g in grads]
+
+
 class SGD(object):
 
-    def __init__(self, lr=1, grad_norm=GradientNorm(), decay=DecayEvery()):
+    def __init__(self, lr=1, grad=MaxNorm(), decay=DecayEvery()):
         self.lr = theano.shared(np.cast[theano.config.floatX](lr))
         self.iteration = theano.shared(1)
-        self.grad_norm = grad_norm
+        self.grad = grad
         self.decay = decay
 
     def __call__(self, params, grads):
-        grads = self.grad_norm(grads)
+        grads = self.grad(grads)
 
         updates = [(self.iteration, self.iteration + 1),
                    (self.lr, T.switch(self.iteration % self.decay.every, self.lr, self.lr * self.decay.rate))]
@@ -64,17 +73,17 @@ class SGD(object):
 
 class RMS(object):
 
-    def __init__(self, lr=2e-3, rho=0.95, epsilon=1e-6, grad_norm=GradientNorm(), decay=DecayEvery()):
+    def __init__(self, lr=0.001, rho=0.9, epsilon=1e-6, grad=Clip(), decay=DecayEvery()):
         self.lr = theano.shared(np.cast[theano.config.floatX](lr))
         self.iteration = theano.shared(1)
 
         self.rho = rho
         self.epsilon = epsilon
-        self.grad_norm = grad_norm
+        self.grad = grad
         self.decay = decay
 
     def __call__(self, params, grads):
-        grads = self.grad_norm(grads)
+        grads = self.grad(grads)
 
         updates = [(self.iteration, self.iteration + 1),
                    (self.lr, T.switch(self.iteration % self.decay.every, self.lr, self.lr * self.decay.rate))]
@@ -123,11 +132,8 @@ def compile_model(model, dataset, optimizer=None):
     i = T.iscalar()
     givens = {x: X[i], y: Y[i]}
 
-    # scale cost by time_steps to account for differences with torch
-    # https://github.com/skaae/nntools/blob/pentree_recurrent/examples/pentree.py
-    cost = CrossEntropy()(model(x), y)    
-    scaled_cost = cost * dataset.time_steps
-   
+    cost = CrossEntropy()(model(x), y)
+
     # perplexity
     perplexity = T.exp(cost)
 
@@ -138,7 +144,12 @@ def compile_model(model, dataset, optimizer=None):
     if optimizer is None:
         updates = []
     else:
-        grads = [T.grad(scaled_cost, param) for param in model.params]
+        # scale cost by time_steps to account for differences with torch
+        # https://github.com/skaae/nntools/blob/pentree_recurrent/examples/pentree.py
+        if isinstance(optimizer, SGD):
+            cost *= dataset.time_steps
+
+        grads = [T.grad(cost, param) for param in model.params]
         updates = optimizer(model.params, grads)
 
     # get non-param updates (e.g. LSTM state)
