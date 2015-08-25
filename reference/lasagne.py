@@ -16,7 +16,7 @@ batch_size = 20
 max_norm = 5
 decay_rate = 0.5
 decay_epoch = 4
-learning_rate = 1
+learning_rate = 0.001
 epochs = 5
 
 # load dataset
@@ -41,9 +41,9 @@ for layer in model.layers:
         layer.set_state(batch_size)
 
 # initialize optimizer
-grad_norm = GradientNorm(max_norm)
+clip = Clip()
 decay = DecayEvery(decay_epoch * train_batches, decay_rate)
-optimizer = SGD(learning_rate, grad_norm, decay)
+optimizer = RMS(grad=clip, decay=decay)
 
 # compile theano functions
 fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
