@@ -43,7 +43,7 @@ for layer in model.layers:
 # initialize optimizer
 grad_norm = GradientNorm(max_norm)
 decay = DecayEvery(decay_epoch * train_batches, decay_rate)
-optimizer = RMS(learning_rate, grad_norm=grad_norm, decay=decay)
+optimizer = SGD(learning_rate, grad_norm, decay)
 
 # compile theano functions
 fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
