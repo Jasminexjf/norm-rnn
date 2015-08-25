@@ -145,9 +145,10 @@ class BN(object):
 
     def __call__(self, x):
         m = x.mean(axis=0)
-        std = std = T.mean((x - m) ** 2 + self.epsilon, axis=0) ** 0.5
+        std = T.mean((x - m) ** 2 + self.epsilon, axis=0) ** 0.5
         x = (x - m) / (std + self.epsilon)
         return self.gamma * x + self.beta
+
 
 class Dropout(object):
 
