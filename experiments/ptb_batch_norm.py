@@ -134,8 +134,7 @@ for model_name, model in models.iteritems():
         valid_trace = Scatter(x=range(len(valid_costs)),
                          y=valid_costs,
                          name='{} (Valid))'.format(model_name),
-                         line=Line(dash='dot'),
-                         color=Line(color=color))
+                         line=Line(color=color, dash='dot'))
 
         # collect traces
         data.append(train_trace)
