@@ -161,7 +161,8 @@ class BN(object):
         running_shape += (input_size, )
 
         self.running_shape = running_shape
-        self.reset_state()
+        self.running_mean = theano.shared(np.zeros(self.running_shape, np.float32))
+        self.running_std = theano.shared(np.zeros(self.running_shape, np.float32))
 
         self.momentum = momentum
         self.epsilon = epsilon
@@ -181,8 +182,8 @@ class BN(object):
         return self.gamma * x + self.beta
 
     def reset_state(self):
-        self.running_mean = theano.shared(np.zeros(self.running_shape, np.float32))
-        self.running_std = theano.shared(np.zeros(self.running_shape, np.float32))
+        self.running_mean.set_value(np.zeros(self.running_shape, np.float32))
+        self.running_std.set_value(np.zeros(self.running_shape, np.float32))
 
 
 class Dropout(object):
