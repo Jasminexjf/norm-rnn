@@ -26,7 +26,11 @@ train_batches = len(dataset.X_train) / batch_size
 valid_batches = len(dataset.X_valid) / batch_size
 test_batches = len(dataset.X_test) / batch_size
 
+# to test plotly
+train_batches = valid_batches = test_batches = 10
+
 # config model
+model_name = 'Reference'
 model = List([
     Embed(vocab_size, layer_size),
     LSTM(layer_size, layer_size),
@@ -49,79 +53,67 @@ optimizer = RMS(grad=clip, decay=decay)
 fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
 val = compile_model_lasagne(model, (dataset.X_valid, dataset.y_valid))
 
-# train
-for epoch in range(1, epochs + 1):
-    print 'epoch({})'.format(epoch)
 
-    # fit
+# function to compute epoch and return loss
+# (put this in model?)
+def apply_to_batches(f, batches):
     perplexity_list = []
     accuracy_list = []
-    train_progress = ProgressBar(range(train_batches))
+    train_progress = ProgressBar(range(batches))
     for batch in train_progress:
-        perplexity, accuracy = fit(batch)
+        perplexity, accuracy = f(batch)
         perplexity_list.append(perplexity)
         accuracy_list.append(accuracy)
         train_progress.perplexity = np.mean(perplexity_list)
         train_progress.accuracy = np.mean(accuracy_list)
 
-    # reset LSTM layers
+    # reset LSTM layer
     for layer in model.layers:
         if isinstance(layer, LSTM):
             layer.set_state(batch_size)
 
+    return np.mean(perplexity_list)
 
-    # validate
-    perplexity_list = []
-    accuracy_list = []
-    valid_progress = ProgressBar(range(valid_batches))
-    for batch in valid_progress:
-        perplexity, accuracy = val(batch)
-        perplexity_list.append(perplexity)
-        accuracy_list.append(accuracy)
-        valid_progress.perplexity = np.mean(perplexity_list)
-        valid_progress.accuracy = np.mean(accuracy_list)
+# train
+train_costs = []
+valid_costs = []
+for epoch in range(1, epochs + 1):
+    print 'epoch({})'.format(epoch)
+    train_costs.append(apply_to_batches(fit, train_batches))
+    valid_costs.append(apply_to_batches(val, valid_batches))
 
-    # reset LSTM and BN layers
-    for layer in model.layers:
-        if isinstance(layer, LSTM):
-            layer.set_state(batch_size)
-        if isinstance(layer, BN):
-            layer.reset_state()
 
+print range(len(train_costs))
+print train_costs
 
 print 'test type(static)'
 val = compile_model_lasagne(model, (dataset.X_test, dataset.y_test))
-
-# static test validation
-perplexity_list = []
-accuracy_list = []
-test_progress = ProgressBar(range(test_batches))
-for batch in test_progress:
-    perplexity, accuracy = val(batch)
-    perplexity_list.append(perplexity)
-    accuracy_list.append(accuracy)
-    test_progress.perplexity = np.mean(perplexity_list)
-    test_progress.accuracy = np.mean(accuracy_list)
-
-
-# reset LSTM and BN layers
-for layer in model.layers:
-    if isinstance(layer, LSTM):
-        layer.set_state(batch_size)
-    if isinstance(layer, BN):
-        layer.reset_state()
+static_cost = apply_to_batches(val, test_batches)
 
 
 print 'test type(dynamic)'
 fit = compile_model_lasagne(model, (dataset.X_test, dataset.y_test), optimizer)
+dynamic_cost = apply_to_batches(fit, test_batches)
 
-# dynamic test validation
-perplexity_list = []
-accuracy_list = []
-test_progress = ProgressBar(range(test_batches))
-for batch in test_progress:
-    perplexity, accuracy = val(batch)
-    perplexity_list.append(perplexity)
-    accuracy_list.append(accuracy)
-    test_progress.perplexity = np.mean(perplexity_list)
-    test_progress.accuracy = np.mean(accuracy_list)
+
+# plot results
+import sys
+import plotly.plotly as py
+from plotly.graph_objs import *
+
+trace0 = Scatter(x=range(len(train_costs)),
+                 y=train_costs,
+                 name='{} (Train))'.format(model_name))
+
+trace1 = Scatter(x=range(len(valid_costs)),
+                 y=valid_costs,
+                 name='{} (Valid))'.format(model_name),
+                 line=Line(dash='dot'))
+
+layout = Layout(xaxis=XAxis(title='Epochs'),
+                yaxis=YAxis(title='Perplexity'))
+
+data = Data([trace0, trace1])
+fig = Figure(data=data, layout=layout)
+py.image.save_as(fig, '{}.png'.format(sys.modules[__name__].__name__))
+plot_url = py.plot(data, filename='basic-line')
