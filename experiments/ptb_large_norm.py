@@ -87,12 +87,14 @@ def apply_to_batches(f, batches):
     # reset LSTM layer
     for layer in model.layers:
         if isinstance(layer, LSTM):
+            # this resets batch-norm to (it probably shouldn't)
             layer.set_state(batch_size)
 
     return np.mean(perplexity_list)
 
 
 # plotly data
+# (move plotly logic to utils)
 data = []
 colors = ['rgb(31, 119, 180)',
           'rgb(255, 127, 14)']
@@ -100,10 +102,10 @@ colors = ['rgb(31, 119, 180)',
 
 # train each model
 for model_name, model in models.iteritems():
-    # set LSTM states
+    # set LSTM and BN states
     for layer in model.layers:
         if isinstance(layer, LSTM):
-            layer.set_state(batch_size)
+            layer.set_state(batch_size, time_steps)
 
     # compile
     fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
@@ -137,19 +139,18 @@ for model_name, model in models.iteritems():
 
         # plot train results
         train_trace = Scatter(x=range(len(train_costs)),
-                         y=train_costs,
-                         name='{} (Train))'.format(model_name),
-                         color=Line(color=color))
+                              y=train_costs,
+                              name='{} (Train)'.format(model_name),
+                              line=Line(color=color))
 
         # plot valid results
         valid_trace = Scatter(x=range(len(valid_costs)),
-                         y=valid_costs,
-                         name='{} (Valid))'.format(model_name),
-                         line=Line(color=color, dash='dot'))
+                              y=valid_costs,
+                              name='{} (Valid)'.format(model_name),
+                              line=Line(color=color, dash='dot'))
 
         # collect traces
-        data.append(train_trace)
-        data.append(valid_trace)
+        data.extend([train_trace, valid_trace])
 
 
 if plotly_is_installed:
@@ -157,9 +158,13 @@ if plotly_is_installed:
     layout = Layout(xaxis=XAxis(title='Epochs'),
                     yaxis=YAxis(title='Perplexity'))
 
+    # file name
+    from os.path import splitext, basename
+    file_name = splitext(basename(__file__))[0]
+
     # save plot and open in browser
     fig = Figure(data=Data(data), layout=layout)
-    py.image.save_as(fig, '{}.png'.format(sys.modules[__name__].__name__))
+    py.image.save_as(fig, '{}.png'.format(file_name))
     plot_url = py.plot(data, filename='basic-line')
 else:
     print 'No plot for you!'
