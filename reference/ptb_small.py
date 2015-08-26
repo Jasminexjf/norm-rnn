@@ -1,13 +1,10 @@
 import numpy as np
 np.random.seed(0)
 
-from datasets import PennTreebank
+from tests.test_dataset import PennTreebank
 from utils import ProgressBar
 from norm_rnn import *
 from layers import *
-
-# lasagne loader for debugging
-from tests.test_dataset import PennTreebank
 
 # hyper parameters
 layer_size = 200
@@ -20,14 +17,11 @@ learning_rate = 0.001
 epochs = 5
 
 # load dataset
-dataset = PennTreebank()
+dataset = PennTreebank(batch_size, time_steps)
 vocab_size = len(dataset.vocab_map)
 train_batches = len(dataset.X_train) / batch_size
 valid_batches = len(dataset.X_valid) / batch_size
 test_batches = len(dataset.X_test) / batch_size
-
-# to test plotly
-train_batches = valid_batches = test_batches = 10
 
 # config model
 model_name = 'Reference'
@@ -45,14 +39,13 @@ for layer in model.layers:
         layer.set_state(batch_size)
 
 # initialize optimizer
-clip = Clip()
+grad = MaxNorm(max_norm)
 decay = DecayEvery(decay_epoch * train_batches, decay_rate)
-optimizer = RMS(grad=clip, decay=decay)
+optimizer = SGD(learning_rate, grad, decay)
 
 # compile theano functions
 fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
 val = compile_model_lasagne(model, (dataset.X_valid, dataset.y_valid))
-
 
 # function to compute epoch and return loss
 # (put this in model?)
@@ -101,11 +94,11 @@ import sys
 import plotly.plotly as py
 from plotly.graph_objs import *
 
-trace0 = Scatter(x=range(len(train_costs)),
+train_trace = Scatter(x=range(len(train_costs)),
                  y=train_costs,
                  name='{} (Train))'.format(model_name))
 
-trace1 = Scatter(x=range(len(valid_costs)),
+valid_trace = Scatter(x=range(len(valid_costs)),
                  y=valid_costs,
                  name='{} (Valid))'.format(model_name),
                  line=Line(dash='dot'))
@@ -113,7 +106,7 @@ trace1 = Scatter(x=range(len(valid_costs)),
 layout = Layout(xaxis=XAxis(title='Epochs'),
                 yaxis=YAxis(title='Perplexity'))
 
-data = Data([trace0, trace1])
+data = Data([train_trace, valid_trace])
 fig = Figure(data=data, layout=layout)
 py.image.save_as(fig, '{}.png'.format(sys.modules[__name__].__name__))
 plot_url = py.plot(data, filename='basic-line')
