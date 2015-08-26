@@ -13,7 +13,7 @@ batch_size = 20
 max_norm = 5
 decay_rate = 0.5
 decay_epoch = 4
-learning_rate = 0.001
+learning_rate = 1
 epochs = 5
 
 # load dataset
