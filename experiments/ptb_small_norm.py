@@ -74,6 +74,7 @@ def apply_to_batches(f, batches):
     # reset LSTM layer
     for layer in model.layers:
         if isinstance(layer, LSTM):
+            # this resets batch-norm to (it probably shouldn't)
             layer.set_state(batch_size)
 
     return np.mean(perplexity_list)
@@ -95,14 +96,7 @@ for model_name, model in models.iteritems():
 
     # compile
     fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
-
-    for layer in model.layers:
-	if isinstance(layer, BNLSTM):
-	    layer.norm_xi.train = False
-	    layer.norm_xf.train = False
-	    layer.norm_xc.train = False
-	    layer.norm_xo.train = False
-
+    model.mode(train=False)
     val = compile_model_lasagne(model, (dataset.X_valid, dataset.y_valid))
 
     print
