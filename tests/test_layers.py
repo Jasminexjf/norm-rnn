@@ -59,13 +59,10 @@ def test_bn():
     bn.set_state(input_size, time_steps)
 
     x = T.tensor3()
-    f = theano.function([x], bn(x), updates=bn.updates)
+    y = x.dimshuffle((1, 0, 2))
+    f = theano.function([x], bn(y), updates=bn.updates)
 
     X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
-    X = X.transpose(1, 0, 2)
-
-    print f(X).shape
-
     assert f(X).shape == (batch_size, time_steps, input_size)
 
 

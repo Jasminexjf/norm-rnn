@@ -66,15 +66,10 @@ class BN(object):
         m = x.mean(axis=self.axis)
         std = T.mean((x - m) ** 2 + self.epsilon, axis=self.axis) ** 0.5
 
-        self.updates = []
-        return m
-
-
         # update shared running averages
         mean_update = self.momentum * self.running_mean + (1-self.momentum) * m
         std_update = self.momentum * self.running_std + (1-self.momentum) * std
         self.updates = [(self.running_mean, mean_update), (self.running_std, std_update)]
-
 
         # normalize using running averages
         # (is this better than batch statistics?)
@@ -86,8 +81,8 @@ class BN(object):
         return self.gamma * x + self.beta
 
     def set_state(self, input_size, time_steps):
-        self.running_mean = theano.shared(np.cast[np.float32](np.zeros((time_steps, input_size))))
-        self.running_std = theano.shared(np.cast[np.float32](np.zeros((time_steps, input_size))))
+        self.running_mean = theano.shared(np.zeros((time_steps, input_size), theano.config.floatX))
+        self.running_std = theano.shared(np.zeros((time_steps, input_size), theano.config.floatX))
         self.shared_state = True
 
 
@@ -159,8 +154,7 @@ class LSTM(object):
         )
 
         if self.shared_state:
-            self.updates.extend([(self.h, outputs[-1]),
-                                 (self.c, memories[-1])])
+            self.updates = [(self.h, outputs[-1]), (self.c, memories[-1])]
 
         return outputs.dimshuffle((1, 0, 2))
 
