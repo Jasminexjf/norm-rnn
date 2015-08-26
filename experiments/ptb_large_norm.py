@@ -23,7 +23,7 @@ layer_size = 1500
 drop_prob = 0.65
 
 # data params
-time_steps = 32
+time_steps = 35
 batch_size = 20
 epochs = 55
 
@@ -34,7 +34,7 @@ decay_epoch = 14
 max_norm = 10
 
 # load data
-dataset = PennTreebank()
+dataset = PennTreebank(batch_size, time_steps)
 vocab_size = len(dataset.vocab_map)
 train_batches = len(dataset.X_train) / batch_size
 valid_batches = len(dataset.X_valid) / batch_size
@@ -67,9 +67,9 @@ models = {
 }
 
 # optimizer
-clip = MaxNorm(max_norm)
+grad = MaxNorm()
 decay = DecayEvery(decay_epoch * train_batches, decay_rate)
-optimizer = SGD(grad=clip, decay=decay)
+optimizer = SGD(learning_rate, grad, decay)
 
 
 # epoch helper (move to model)
@@ -107,6 +107,7 @@ for model_name, model in models.iteritems():
 
     # compile
     fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
+    model.mode(train=False)
     val = compile_model_lasagne(model, (dataset.X_valid, dataset.y_valid))
 
     print
