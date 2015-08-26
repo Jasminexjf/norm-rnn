@@ -54,9 +54,9 @@ models = {
 }
 
 # optimizer
-clip = MaxNorm()
+grad = MaxNorm()
 decay = DecayEvery(decay_epoch * train_batches, decay_rate)
-optimizer = SGD(grad=clip, decay=decay)
+optimizer = SGD(learning_rate, grad, decay)
 
 
 # epoch helper (move to model)
