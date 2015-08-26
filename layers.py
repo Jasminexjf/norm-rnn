@@ -51,19 +51,44 @@ class Embed(object):
 
 class BN(object):
 
-    def __init__(self, input_size, axis=0, epsilon=1e-6):
+    def __init__(self, input_size, axis=0, momentum=0.9, epsilon=1e-6):
         self.gamma = theano.shared(np.ones(input_size, dtype=np.float32))
         self.beta = theano.shared(np.zeros(input_size, dtype=np.float32))
         self.params = [self.gamma, self.beta]
 
         self.axis = axis
         self.epsilon = epsilon
+        self.momentum = momentum
+        self.shared_state = False
 
     def __call__(self, x):
+        # batch statistics
         m = x.mean(axis=self.axis)
         std = T.mean((x - m) ** 2 + self.epsilon, axis=self.axis) ** 0.5
-        x = (x - m) / (std + self.epsilon)
+
+        self.updates = []
+        return m
+
+
+        # update shared running averages
+        mean_update = self.momentum * self.running_mean + (1-self.momentum) * m
+        std_update = self.momentum * self.running_std + (1-self.momentum) * std
+        self.updates = [(self.running_mean, mean_update), (self.running_std, std_update)]
+
+
+        # normalize using running averages
+        # (is this better than batch statistics?)
+        # (this version seems like it is using the running average
+        #  of the previous batch since updates happens after)
+        x = (x - self.running_mean) / (self.running_std + self.epsilon)
+
+        # scale and shift
         return self.gamma * x + self.beta
+
+    def set_state(self, input_size, time_steps):
+        self.running_mean = theano.shared(np.cast[np.float32](np.zeros((time_steps, input_size))))
+        self.running_std = theano.shared(np.cast[np.float32](np.zeros((time_steps, input_size))))
+        self.shared_state = True
 
 
 class Dropout(object):
@@ -113,6 +138,7 @@ class LSTM(object):
         self.activation = activation
         self.inner_activation = inner_activation
 
+        self.updates = []
         self.shared_state = False
         self.layer_size = layer_size
 
@@ -133,7 +159,8 @@ class LSTM(object):
         )
 
         if self.shared_state:
-            self.updates = [(self.h, outputs[-1]), (self.c, memories[-1])]
+            self.updates.extend([(self.h, outputs[-1]),
+                                 (self.c, memories[-1])])
 
         return outputs.dimshuffle((1, 0, 2))
 
@@ -159,7 +186,7 @@ class LSTM(object):
     def _alloc_zeros_matrix(self, *dims):
         return T.alloc(np.cast[theano.config.floatX](0.), *dims)
 
-    def set_state(self, batch_size):
+    def set_state(self, batch_size, time_steps=None):
         # make hidden and cells a shared variable so that state is persistent
         self.h = theano.shared(np.zeros((batch_size, self.layer_size), dtype=theano.config.floatX))
         self.c = theano.shared(np.zeros((batch_size, self.layer_size), dtype=theano.config.floatX))
@@ -196,4 +223,18 @@ class BNLSTM(LSTM):
         xf = self.norm_xf(T.dot(x, self.W_f))
         xc = self.norm_xc(T.dot(x, self.W_c))
         xo = self.norm_xo(T.dot(x, self.W_o))
+
+        # setting running updates
+        self.updates.extend(self.norm_xi.updates + self.norm_xf.updates +
+                            self.norm_xc.updates + self.norm_xo.updates)
+
         return xi, xf, xc, xo
+
+    def set_state(self, batch_size, time_steps=None):
+        super(BNLSTM, self).set_state(batch_size)
+
+        if time_steps is not None:
+            self.norm_xi.set_state(self.layer_size, time_steps)
+            self.norm_xf.set_state(self.layer_size, time_steps)
+            self.norm_xc.set_state(self.layer_size, time_steps)
+            self.norm_xo.set_state(self.layer_size, time_steps)

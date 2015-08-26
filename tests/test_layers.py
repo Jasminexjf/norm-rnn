@@ -44,35 +44,41 @@ def test_crossentropy():
 def test_lstm():
     from layers import LSTM
     lstm = LSTM(input_size, layer_size)
+    lstm.set_state(batch_size)
 
     x = T.tensor3()
-    f = theano.function([x], lstm(x))
+    f = theano.function([x], lstm(x), updates=lstm.updates)
 
     X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
     assert f(X).shape == (batch_size, time_steps, layer_size)
 
-    lstm.set_state(batch_size)
 
-    f = theano.function([x], lstm(x), updates=lstm.updates)
+def test_bn():
+    from layers import BN
+    bn = BN(input_size, axis=1)
+    bn.set_state(input_size, time_steps)
+
+    x = T.tensor3()
+    f = theano.function([x], bn(x), updates=bn.updates)
+
+    X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
+    X = X.transpose(1, 0, 2)
+
+    print f(X).shape
+
+    assert f(X).shape == (batch_size, time_steps, input_size)
+
+
+def test_bn_lstm():
+    from layers import BNLSTM
+    bn_lstm = BNLSTM(input_size, layer_size)
+    bn_lstm.set_state(batch_size, time_steps)
+
+    x = T.tensor3()
+    X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
+
+    f = theano.function([x], bn_lstm(x), updates=bn_lstm.updates)
     assert f(X).shape == (batch_size, time_steps, layer_size)
 
 
-def test_batch_norm():
-    from layers import BN
-    bn = BN(input_size)
-
-    x = T.tensor3()
-    f = theano.function([x], bn(x))
-
-    x = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
-    x[1] *= 2
-
-    bn = (x - x.mean(0)) / (x.std(0))
-    assert np.allclose(f(x), bn)
-
-
-def test_batch_norm_lstm():
-    pass
-
-
-test_batch_norm()
+test_bn()

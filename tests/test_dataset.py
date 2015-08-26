@@ -174,6 +174,3 @@ def split_hutter_prize():
         print len(data)
         with open('enwik8_{}'.format(split_name), 'w') as text_file:
             text_file.write(data)
-
-
-split_hutter_prize()
