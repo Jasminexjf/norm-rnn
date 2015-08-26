@@ -126,7 +126,7 @@ for model_name, model in models.iteritems():
         train_trace = Scatter(x=range(len(train_costs)),
                               y=train_costs,
                               name='{} (Train))'.format(model_name),
-                              color=Line(color=color))
+                              line=Line(color=color))
 
         # plot valid results
         valid_trace = Scatter(x=range(len(valid_costs)),
