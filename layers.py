@@ -51,16 +51,17 @@ class Embed(object):
 
 class BN(object):
 
-    def __init__(self, input_size, epsilon=1e-6):
+    def __init__(self, input_size, axis=0, epsilon=1e-6):
         self.gamma = theano.shared(np.ones(input_size, dtype=np.float32))
         self.beta = theano.shared(np.zeros(input_size, dtype=np.float32))
         self.params = [self.gamma, self.beta]
 
+        self.axis = axis
         self.epsilon = epsilon
 
     def __call__(self, x):
-        m = x.mean(axis=0)
-        std = T.mean((x - m) ** 2 + self.epsilon, axis=0) ** 0.5
+        m = x.mean(axis=self.axis)
+        std = T.mean((x - m) ** 2 + self.epsilon, axis=self.axis) ** 0.5
         x = (x - m) / (std + self.epsilon)
         return self.gamma * x + self.beta
 
@@ -179,10 +180,11 @@ class BNLSTM(LSTM):
         self.params.pop(8)
 
         # add batch norm layers
-        self.norm_xi = BN(layer_size)
-        self.norm_xf = BN(layer_size)
-        self.norm_xc = BN(layer_size)
-        self.norm_xo = BN(layer_size)
+        # (axis=1 since we swap first two axis before calling batch norm)
+        self.norm_xi = BN(layer_size, axis=1)
+        self.norm_xf = BN(layer_size, axis=1)
+        self.norm_xc = BN(layer_size, axis=1)
+        self.norm_xo = BN(layer_size, axis=1)
 
         # add batch norm params
         self.params.extend(self.norm_xi.params + self.norm_xf.params +
