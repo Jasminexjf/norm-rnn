@@ -51,7 +51,7 @@ class Embed(object):
 
 class BN(object):
 
-    def __init__(self, input_size, momentum=0.9, epsilon=1e-6):
+    def __init__(self, input_size, momentum=0.1, epsilon=1e-6):
         self.gamma = theano.shared(np.ones(input_size, dtype=np.float32))
         self.beta = theano.shared(np.zeros(input_size, dtype=np.float32))
         self.params = [self.gamma, self.beta]
