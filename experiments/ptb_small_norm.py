@@ -32,7 +32,7 @@ decay_epoch = 4
 max_norm = 5
 
 # load data
-dataset = PennTreebank()
+dataset = PennTreebank(batch_size, time_steps)
 vocab_size = len(dataset.vocab_map)
 train_batches = len(dataset.X_train) / batch_size
 valid_batches = len(dataset.X_valid) / batch_size
@@ -88,10 +88,10 @@ colors = ['rgb(31, 119, 180)',
 
 # train each model
 for model_name, model in models.iteritems():
-    # set LSTM states
+    # set LSTM and BN states
     for layer in model.layers:
         if isinstance(layer, LSTM):
-            layer.set_state(batch_size)
+            layer.set_state(batch_size, time_steps)
 
     # compile
     fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
@@ -124,19 +124,18 @@ for model_name, model in models.iteritems():
 
         # plot train results
         train_trace = Scatter(x=range(len(train_costs)),
-                         y=train_costs,
-                         name='{} (Train))'.format(model_name),
-                         color=Line(color=color))
+                              y=train_costs,
+                              name='{} (Train))'.format(model_name),
+                              color=Line(color=color))
 
         # plot valid results
         valid_trace = Scatter(x=range(len(valid_costs)),
-                         y=valid_costs,
-                         name='{} (Valid))'.format(model_name),
-                         line=Line(color=color, dash='dot'))
+                              y=valid_costs,
+                              name='{} (Valid))'.format(model_name),
+                              line=Line(color=color, dash='dot'))
 
         # collect traces
-        data.append(train_trace)
-        data.append(valid_trace)
+        data.extend([train_trace, valid_trace])
 
 
 if plotly_is_installed:
