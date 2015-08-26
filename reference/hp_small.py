@@ -7,7 +7,7 @@ from norm_rnn import *
 from layers import *
 
 # lasagne loader for debugging
-from tests.test_dataset import LasagneLoader
+from tests.test_dataset import HutterPrize
 
 # hyper parameters
 layer_size = 200
@@ -20,14 +20,11 @@ learning_rate = 0.001
 epochs = 5
 
 # load dataset
-dataset = LasagneLoader()
+dataset = HutterPrize(128, 100)
 vocab_size = len(dataset.vocab_map)
 train_batches = len(dataset.X_train) / batch_size
 valid_batches = len(dataset.X_valid) / batch_size
 test_batches = len(dataset.X_test) / batch_size
-
-# to test plotly
-train_batches = valid_batches = test_batches = 10
 
 # config model
 model_name = 'Reference'

@@ -117,19 +117,38 @@ def validdata(model_seq_len, batch_size, vocab_map, vocab_idx):
 # lasagne
 def testdata(model_seq_len, batch_size, vocab_map, vocab_idx):
     x = load_data("ptb.test.txt.gz", vocab_map, vocab_idx)
-    return reorder(x, batch_size, model_seq_len)
+    return
 
 
 # lasagne
-class LasagneLoader():
+class PennTreebank():
 
-    def __init__(self):
+    def __init__(self, batch_size, time_steps):
         self.vocab_map = {}
         self.vocab_idx = [0]
 
-        self.X_train, self.y_train = traindata(20, 20, self.vocab_map, self.vocab_idx)
-        self.X_valid, self.y_valid = validdata(20, 20, self.vocab_map, self.vocab_idx)
-        self.X_test, self.y_test = testdata(20, 20, self.vocab_map, self.vocab_idx)
+        train_data = load_data("ptb.train.txt.gz", self.vocab_map, self.vocab_idx)
+        valid_data = load_data("ptb.valid.txt.gz", self.vocab_map, self.vocab_idx)
+        test_data = load_data("ptb.test.txt.gz", self.vocab_map, self.vocab_idx)
+
+        self.X_train, self.y_train = reorder(train_data, batch_size, time_steps)
+        self.X_valid, self.y_valid = reorder(valid_data, batch_size, time_steps)
+        self.X_test, self.y_test = reorder(test_data, batch_size, time_steps)
+
+
+class HutterPrize():
+
+    def __init__(self, batch_size, time_steps):
+        self.vocab_map = {}
+        self.vocab_idx = [0]
+
+        train_data = load_data("enwik8_train", self.vocab_map, self.vocab_idx)
+        valid_data = load_data("enwik8_valid", self.vocab_map, self.vocab_idx)
+        test_data = load_data("enwik8_test", self.vocab_map, self.vocab_idx)
+
+        self.X_train, self.y_train = reorder(train_data, batch_size, time_steps)
+        self.X_valid, self.y_valid = reorder(valid_data, batch_size, time_steps)
+        self.X_test, self.y_test = reorder(test_data, batch_size, time_steps)
 
 
 def test_penn_treebank():
@@ -137,3 +156,24 @@ def test_penn_treebank():
     ptb = PennTreebank(path='../data/ptb.train.txt')
 
     print ptb.X[0][0]
+
+
+def split_hutter_prize():
+    with open('enwik8') as text_file:
+        text = text_file.read()
+
+    valid_start = int(0.9 * len(text))
+    valid_end = int(0.94 * len(text))
+
+    train = text[:valid_start]
+    valid = text[valid_start:valid_end]
+    test = text[valid_end:]
+
+    for split_name, data in zip(['train', 'valid', 'test'],
+                                [train, valid, test]):
+        print len(data)
+        with open('enwik8_{}'.format(split_name), 'w') as text_file:
+            text_file.write(data)
+
+
+split_hutter_prize()

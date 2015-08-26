@@ -3,7 +3,7 @@ import numpy as np
 np.random.seed(0)
 
 # lasagne loader (merge into datasets)
-from tests.test_dataset import LasagneLoader
+from tests.test_dataset import PennTreebank
 from utils import ProgressBar
 from norm_rnn import *
 from layers import *
@@ -34,7 +34,7 @@ decay_epoch = 14
 max_norm = 10
 
 # load data
-dataset = LasagneLoader()
+dataset = PennTreebank()
 vocab_size = len(dataset.vocab_map)
 train_batches = len(dataset.X_train) / batch_size
 valid_batches = len(dataset.X_valid) / batch_size
