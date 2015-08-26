@@ -57,9 +57,13 @@ models = {
 
     'With Batch Normalization':
         List([Embed(vocab_size, layer_size, weight_init=weight_init),
+              Dropout(drop_prob),
               BNLSTM(layer_size, layer_size, weight_init=weight_init),
+              Dropout(drop_prob),
               BNLSTM(layer_size, layer_size, weight_init=weight_init),
-              Linear(layer_size, vocab_size, weight_init=weight_init)])
+              Linear(layer_size, vocab_size, Identity(), weight_init=weight_init),
+              Dropout(drop_prob),
+              Softmax()])
 }
 
 # optimizer
