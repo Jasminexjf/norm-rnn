@@ -159,8 +159,7 @@ class LSTM(object):
         )
 
         if self.shared_state:
-            self.updates.extend([(self.h, outputs[-1]),
-                                 (self.c, memories[-1])])
+            self.updates = [(self.h, outputs[-1]), (self.c, memories[-1])]
 
         return outputs.dimshuffle((1, 0, 2))
 
