@@ -127,13 +127,13 @@ for model_name, model in models.iteritems():
         # plot train results
         train_trace = Scatter(x=range(len(train_costs)),
                               y=train_costs,
-                              name='{} (Train))'.format(model_name),
+                              name='{} (Train)'.format(model_name),
                               line=Line(color=color))
 
         # plot valid results
         valid_trace = Scatter(x=range(len(valid_costs)),
                               y=valid_costs,
-                              name='{} (Valid))'.format(model_name),
+                              name='{} (Valid)'.format(model_name),
                               line=Line(color=color, dash='dot'))
 
         # collect traces
