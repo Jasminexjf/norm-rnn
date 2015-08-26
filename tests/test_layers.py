@@ -55,12 +55,11 @@ def test_lstm():
 
 def test_bn():
     from layers import BN
-    bn = BN(input_size, axis=1)
+    bn = BN(input_size)
     bn.set_state(input_size, time_steps)
 
     x = T.tensor3()
-    y = x.dimshuffle((1, 0, 2))
-    f = theano.function([x], bn(y), updates=bn.updates)
+    f = theano.function([x], bn(x), updates=bn.updates)
 
     X = np.ones((batch_size, time_steps, input_size), dtype=np.float32)
     assert f(X).shape == (batch_size, time_steps, input_size)
@@ -78,4 +77,4 @@ def test_bn_lstm():
     assert f(X).shape == (batch_size, time_steps, layer_size)
 
 
-test_bn()
+test_bn_lstm()

@@ -51,20 +51,19 @@ class Embed(object):
 
 class BN(object):
 
-    def __init__(self, input_size, axis=0, momentum=0.9, epsilon=1e-6):
+    def __init__(self, input_size, momentum=0.9, epsilon=1e-6):
         self.gamma = theano.shared(np.ones(input_size, dtype=np.float32))
         self.beta = theano.shared(np.zeros(input_size, dtype=np.float32))
         self.params = [self.gamma, self.beta]
 
-        self.axis = axis
         self.epsilon = epsilon
         self.momentum = momentum
         self.shared_state = False
 
     def __call__(self, x):
         # batch statistics
-        m = x.mean(axis=self.axis)
-        std = T.mean((x - m) ** 2 + self.epsilon, axis=self.axis) ** 0.5
+        m = x.mean(axis=0)
+        std = T.mean((x - m) ** 2 + self.epsilon, axis=0) ** 0.5
 
         # update shared running averages
         mean_update = self.momentum * self.running_mean + (1-self.momentum) * m
@@ -138,8 +137,7 @@ class LSTM(object):
         self.layer_size = layer_size
 
     def __call__(self, x):
-        x = x.dimshuffle((1, 0, 2))
-
+        # (time_steps, batch_size, layers_size)
         xi, xf, xc, xo = self._input_to_hidden(x)
 
         # if set_state hasn't been called, use temporary zeros (stateless)
@@ -159,6 +157,9 @@ class LSTM(object):
         return outputs.dimshuffle((1, 0, 2))
 
     def _input_to_hidden(self, x):
+        # (time_steps, batch_size, input_size)
+        x = x.dimshuffle((1, 0, 2))
+
         xi = T.dot(x, self.W_i) + self.b_i
         xf = T.dot(x, self.W_f) + self.b_f
         xc = T.dot(x, self.W_c) + self.b_c
@@ -202,10 +203,10 @@ class BNLSTM(LSTM):
 
         # add batch norm layers
         # (axis=1 since we swap first two axis before calling batch norm)
-        self.norm_xi = BN(layer_size, axis=1)
-        self.norm_xf = BN(layer_size, axis=1)
-        self.norm_xc = BN(layer_size, axis=1)
-        self.norm_xo = BN(layer_size, axis=1)
+        self.norm_xi = BN(layer_size)
+        self.norm_xf = BN(layer_size)
+        self.norm_xc = BN(layer_size)
+        self.norm_xo = BN(layer_size)
 
         # add batch norm params
         self.params.extend(self.norm_xi.params + self.norm_xf.params +
@@ -222,11 +223,16 @@ class BNLSTM(LSTM):
         self.updates.extend(self.norm_xi.updates + self.norm_xf.updates +
                             self.norm_xc.updates + self.norm_xo.updates)
 
-        return xi, xf, xc, xo
+        # (time_steps, batch_size, layer_size)
+        return xi.dimshuffle((1, 0, 2)), \
+               xf.dimshuffle((1, 0, 2)), \
+               xc.dimshuffle((1, 0, 2)), \
+               xo.dimshuffle((1, 0, 2))
 
     def set_state(self, batch_size, time_steps=None):
         super(BNLSTM, self).set_state(batch_size)
 
+        # set batch norm state
         if time_steps is not None:
             self.norm_xi.set_state(self.layer_size, time_steps)
             self.norm_xf.set_state(self.layer_size, time_steps)
