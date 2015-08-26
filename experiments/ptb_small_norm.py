@@ -80,6 +80,7 @@ def apply_to_batches(f, batches):
 
 
 # plotly data
+# (move plotly logic to utils)
 data = []
 colors = ['rgb(31, 119, 180)',
           'rgb(255, 127, 14)']
@@ -143,9 +144,13 @@ if plotly_is_installed:
     layout = Layout(xaxis=XAxis(title='Epochs'),
                     yaxis=YAxis(title='Perplexity'))
 
+    # file name
+    from os.path import splitext, basename
+    file_name = splitext(basename(__file__))[0]
+
     # save plot and open in browser
     fig = Figure(data=Data(data), layout=layout)
-    py.image.save_as(fig, '{}.png'.format(sys.modules[__name__].__name__))
+    py.image.save_as(fig, '{}.png'.format(file_name))
     plot_url = py.plot(data, filename='basic-line')
 else:
     print 'No plot for you!'
