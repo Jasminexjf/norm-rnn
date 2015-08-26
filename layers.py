@@ -59,6 +59,7 @@ class BN(object):
         self.epsilon = epsilon
         self.momentum = momentum
         self.shared_state = False
+	self.train = True
 
     def __call__(self, x):
         # batch statistics
@@ -74,7 +75,10 @@ class BN(object):
         # (is this better than batch statistics?)
         # (this version seems like it is using the running average
         #  of the previous batch since updates happens after)
-        x = (x - self.running_mean) / (self.running_std + self.epsilon)
+        if self.train:
+	    x = (x - m) / (std + self.epsilon)
+	else:
+	    x = (x - self.running_mean) / (self.running_std + self.epsilon)
 
         # scale and shift
         return self.gamma * x + self.beta

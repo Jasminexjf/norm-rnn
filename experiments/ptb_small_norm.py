@@ -95,6 +95,14 @@ for model_name, model in models.iteritems():
 
     # compile
     fit = compile_model_lasagne(model, (dataset.X_train, dataset.y_train), optimizer)
+
+    for layer in model.layers:
+	if isinstance(layer, BNLSTM):
+	    layer.norm_xi.train = False
+	    layer.norm_xf.train = False
+	    layer.norm_xc.train = False
+	    layer.norm_xo.train = False
+
     val = compile_model_lasagne(model, (dataset.X_valid, dataset.y_valid))
 
     print
