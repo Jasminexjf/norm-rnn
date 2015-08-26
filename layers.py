@@ -91,9 +91,13 @@ class Dropout(object):
         from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
         self.srng = RandomStreams(seed=np.random.randint(10e6))
         self.p = p
+        self.train = True
 
     def __call__(self, x):
+        if self.train:
             return x * self.srng.binomial(x.shape, p=1-self.p, dtype=theano.config.floatX)
+        else:
+            return x * (1 - self.p)
 
 
 class LSTM(object):
@@ -202,7 +206,6 @@ class BNLSTM(LSTM):
         self.params.pop(8)
 
         # add batch norm layers
-        # (axis=1 since we swap first two axis before calling batch norm)
         self.norm_xi = BN(layer_size)
         self.norm_xf = BN(layer_size)
         self.norm_xc = BN(layer_size)

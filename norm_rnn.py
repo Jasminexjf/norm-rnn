@@ -120,6 +120,13 @@ class List(object):
                 pass # layer has no params (i.e. dropout)
         return params
 
+    def mode(self, train=True):
+        for layer in self.layers:
+            try:
+                layer.train = train
+            except AttributeError:
+                pass # layer logic is independent of train/valid
+
 
 def compile_model(model, dataset, optimizer=None):
     x = T.imatrix()
@@ -192,11 +199,10 @@ def compile_model_lasagne(model, (X, Y), optimizer=None):
         updates = optimizer(model.params, grads)
 
     # get non-param updates (e.g. LSTM state)
+    from layers import LSTM
     for layer in model.layers:
-        try:
+        if isinstance(layer, LSTM):
             updates.extend(layer.updates)
-        except AttributeError:
-            pass
 
     return theano.function([i], (perplexity, accuracy), None, updates, givens)
 
