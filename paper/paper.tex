@@ -1,0 +1,166 @@
+% Template for ICASSP-2016 paper; to be used with:
+%          spconf.sty  - ICASSP/ICIP LaTeX style file, and
+%          IEEEbib.bst - IEEE bibliography style file.
+% --------------------------------------------------------------------------
+\documentclass{article}
+\usepackage{spconf,amsmath,graphicx}
+\usepackage{natbib}
+
+% Example definitions.
+% --------------------
+\def\x{{\mathbf x}}
+\def\L{{\cal L}}
+
+% Title.
+% ------
+\title{Training Recurrent Neural Networks with Batch Normalization}
+
+\name{C\'{e}sar Laurent$^\ast$, Gabriel Pereyra$^\dagger$, Phil\'{e}mon
+Brakel$^\ast$, Ying Zhang$^\ast$ and
+Yoshua Bengio$^\ast{}^1$}
+\address{
+  $^\ast$ Universit\'e de Montr\'eal\\
+  $^\dagger$University of Southern California\\
+  ${^1}$ CIFAR Fellow}
+%
+% Single address.
+% ---------------
+%\name{Author(s) Name(s)\thanks{Thanks to XYZ agency for funding.}}
+%\address{Author Affiliation(s)}
+%
+% For example:
+% ------------
+%\address{School\\
+%	Department\\
+%	Address}
+%
+% Two addresses (uncomment and modify for two-address case).
+% ----------------------------------------------------------
+%\twoauthors
+%  {A. Author-one, B. Author-two\sthanks{Thanks to XYZ agency for funding.}}
+%	{School A-B\\
+%	Department A-B\\
+%	Address A-B}
+%  {C. Author-three, D. Author-four\sthanks{The fourth author performed the work
+%	while at ...}}
+%	{School C-D\\
+%	Department C-D\\
+%	Address C-D}
+%
+\begin{document}
+%\ninept
+%
+\maketitle
+%
+\begin{abstract}
+The abstract should appear at the top of the left-hand column of text, about
+0.5 inch (12 mm) below the title area and no more than 3.125 inches (80 mm) in
+length.  Leave a 0.5 inch (12 mm) space between the end of the abstract and the
+beginning of the main text.  The abstract should contain about 100 to 150
+words, and should be identical to the abstract text submitted electronically
+along with the paper cover sheet.  All manuscripts must be in English, printed
+in black ink.
+\end{abstract}
+%
+\begin{keywords}
+batch normalization, RNN, optimization, speech recognition, language model
+\end{keywords}
+%
+\section{Introduction}
+
+Recurrent Neural Networks (RNNs) have been used with great success to
+obtain good or even state-of-the-art performance on a variety of tasks including phoneme
+recognition \citep{graves2013speech}, language modelling
+\citep{mikolov2012thesis}, machine translation
+\citep{sutskever2014sequence,bahdanau2014,cho2014properties,kalchbrenner2013}
+and handwriting recognition \citep{graves2009offline}.
+Many of these systems employ \emph{deep} RNN architectures in which multiple
+RNNs are stacked on top of each other.
+% TODO: talk about draw and image to caption?
+Unfortunately, RNNs tend to be harder to train than their feed-forward
+counterparts and less suitable for parallelization. This often causes the
+training of RNNs on large data sets to be a very time consuming process.
+This can be especially problematic for stacks of RNNs in which gradients have
+to be propagated non only through time but also through depth.
+
+Recently, a method called \emph{Batch Normalization} was proposed to aid the
+training of Deep Neural Networks (DNNs) \citep{ioffe2015} and it was shown to
+greatly reduce the number of weight updates required to achieve
+state-of-the-art performance on the ImageNet task.
+In this paper, we investigate how Batch Normalization can be used to train RNNs
+more efficiently. One of the questions one needs to answer is at which
+locations of the networks the normalization should be applied.
+
+\section{Batch Normalization}
+
+The motivation behind Batch Normalization is based on the hypothesis that an
+important obstacle in way of efficient DNN training is what the original
+authors refer to as \emph{covariate drift}. The idea is that as the parameters
+in the lower layers change, the distribution of their activations changes as
+well, essentially requiring the layer above to adapt to an ever changing input
+distribution. As the name suggests, Batch Normalization combats this problem by
+\emph{normalizing} the input distributions of each layer, using mean and
+variance statistics obtained from small subsets of data referred to as
+\emph{batches}.
+
+Let $\mathbf{x}$ be a $d$-dimensional input vector with elements $(x_1, x_2, \cdots, x_d)$ and let $\mathbf{\hat{x}}$ be the vector obtained after normalizing each element of $\mathbf{x}$ using
+\begin{equation}
+\hat{x}_k = \frac{x_k - \mathrm{E}[x_k]}{\sqrt{\text{Var}(x_k)}},
+\end{equation}
+where the expectation $\mathbf{E}[\cdot]$ and variance $\text{Var}(\cdot)$ are
+approximated using sample statistic from the current mini-batch.
+To avoid that the normalization limits the range of mappings the layer can represent, the final transformation is defined as
+\begin{equation}
+y_k = \gamma_k \hat{x}_k + \beta_k,
+\end{equation}
+where $\gamma_k$ and $\beta_k$ are trainable parameters that can potentially
+learn to undo the normalization transformation again if needed.
+The expected value and variance approximations for each batch $\mathcal{B}$ are computed as
+\begin{align}
+\mu_{\mathcal{B}} &= \frac{1}{m}\sum_{i=1}^{m} x_i,\\
+\sigma^2_{\mathcal{B}} &= \epsilon + \frac{1}{m}\sum_{i=1}^{m} (x_i - \mu_{\mathcal{B}}),\\
+\end{align}
+where $m$ is the number of examples in the mini-batch and the value $\epsilon$
+is added to the variance estimate to improve numerical stability.
+
+\section{Recurrent Neural Networks}
+
+\subsection{Long Short-Term Memory}
+LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gate functions into their state dynamics [?]. At each time step, an LSTM maintains a \textit{hidden} vector $\boldsymbol h$ and a \textit{memory} vector $\boldsymbol m$  vector responsible for controlling information flow through the network. More concretely, we define the computation as time step $i$ as follows [?]:
+
+\begin{equation}
+\begin{split}
+& \boldsymbol g^u = \sigma(\boldsymbol W^u * \boldsymbol h + \boldsymbol I * \boldsymbol x) \\
+& \boldsymbol g^f = \sigma(\boldsymbol W^f * \boldsymbol h + \boldsymbol I * \boldsymbol x) \\
+& \boldsymbol g^o = \sigma(\boldsymbol W^o * \boldsymbol h + \boldsymbol I * \boldsymbol x) \\
+& \boldsymbol g^c = \tanh(\boldsymbol W^c * \boldsymbol h + \boldsymbol I * \boldsymbol x) \\
+& \boldsymbol m' = \boldsymbol g^f \odot \boldsymbol g^u \odot \boldsymbol g^c \\
+& \boldsymbol h' = \tanh(\boldsymbol g^o \odot m') \nonumber
+\end{split}
+\end{equation}
+
+Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W^u, \boldsymbol W^f, \boldsymbol W^o, \boldsymbol W^c$ are recurrent weight matrices and $I$ is a projection matrix.
+
+\section{Where to Normalize}
+
+Generalizing the notation above, we can apply batch normalization in a number of places in the LSTM equations.
+
+\begin{equation}
+\boldsymbol g = \sigma(\boldsymbol W * \boldsymbol h + BN(\boldsymbol I * \boldsymbol x)) \\
+\end{equation}
+
+
+\section{Experiments}
+
+\section{Discussion}
+
+% References should be produced using the bibtex program from suitable
+% BiBTeX files (here: strings, refs, manuals). The IEEEbib.bst bibliography
+% style file from IEEE produces unsorted bibliography list.
+% -------------------------------------------------------------------------
+%\bibliographystyle{IEEEbib}
+
+\bibliographystyle{natbib}
+\bibliography{paperrefs}
+
+\end{document}
