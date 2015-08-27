@@ -126,10 +126,16 @@ is added to the variance estimate to improve numerical stability.
 RNNs maintain a hidden vector $\boldsymbol h$, which is updated at time step $t$ as follows:
  
 \begin{equation}
-	& \boldsymbol h_t = \sigma(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \nonumber
+	\boldsymbol h_t = \sigma(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \nonumber
 \end{equation}
 
-Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix.
+Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix. Stacking RNNs, such that the hidden vector $\boldysmbol h$ of a lower layer becomes the input of an upper layer is one method for creating deeper architectures [?]
+
+\begin{equation}
+	\boldsymbol h_t^{l} = \sigma(\boldsymbol W * \boldsymbol h_{t-1}^{l} + \boldsymbol I * \boldsymbol h_t^{l-1}) \nonumber
+\end{equation}
+
+Training vanilla RNNs is known to be particularly difficult, primarily due to the vanishing gradient problem [?].
 
 \subsection{Long Short-Term Memory}
 LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gating functions into their state dynamics [?]. At each time step, an LSTM maintains a hidden vector $\boldsymbol h$ and a memory vector $\boldsymbol m$  responsible for controlling state updates and outputs. More concretely, we define the computation at time step $t$ as follows [?]:
@@ -140,7 +146,7 @@ LSTMs address the vanishing gradient problem commonly found in RNNs by incorpora
 		& \boldsymbol g^f = \sigma(\boldsymbol W^f * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
 		& \boldsymbol g^o = \sigma(\boldsymbol W^o * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
 		& \boldsymbol g^c = \tanh(\boldsymbol W^c * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
-		& \boldsymbol m_t = \boldsymbol g^f \odot \boldsymbol g^u \odot \boldsymbol g^c \\
+		& \boldsymbol m_t = \boldsymbol g^f \odot \boldsymbol +  g^u \odot \boldsymbol g^c \\
 		& \boldsymbol h_t = \tanh(\boldsymbol g^o \odot \boldsymbol m_{t-1}) \nonumber
 	\end{split}
 \end{equation}
