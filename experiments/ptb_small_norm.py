@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 np.random.seed(0)
 
@@ -38,20 +37,22 @@ train_batches = len(dataset.X_train) / batch_size
 valid_batches = len(dataset.X_valid) / batch_size
 test_batches = len(dataset.X_test) / batch_size
 
-# models
-models = {
-    'Without Batch Normalization':
-        List([Embed(vocab_size, layer_size),
-              LSTM(layer_size, layer_size),
-              LSTM(layer_size, layer_size),
-              Linear(layer_size, vocab_size)]),
+# model config
+from collections import OrderedDict
+models = OrderedDict()
 
-    'With Batch Normalization':
-        List([Embed(vocab_size, layer_size),
-              BNLSTM(layer_size, layer_size),
-              BNLSTM(layer_size, layer_size),
-              Linear(layer_size, vocab_size)])
-}
+models['Without Batch Normalization'] = List([
+    Embed(vocab_size, layer_size),
+    LSTM(layer_size, layer_size),
+    LSTM(layer_size, layer_size),
+    Linear(layer_size, vocab_size)])
+
+models['With Batch Normalization'] = List([
+    Embed(vocab_size, layer_size),
+    BNLSTM(layer_size, layer_size),
+    BNLSTM(layer_size, layer_size),
+    Linear(layer_size, vocab_size)])
+
 
 # optimizer
 grad = MaxNorm()
