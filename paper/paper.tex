@@ -127,7 +127,7 @@ is added to the variance estimate to improve numerical stability.
 RNNs maintain a hidden vector $\boldsymbol h$, which is updated at time step $t$ as follows:
  
 \begin{equation}
-& \boldsymbol h_t = \sigma(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \nonumber
+	& \boldsymbol h_t = \sigma(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \nonumber
 \end{equation}
 
 Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix.
@@ -136,14 +136,14 @@ Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W$ is the recurren
 LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gating functions into their state dynamics [?]. At each time step, an LSTM maintains a hidden vector $\boldsymbol h$ and a memory vector $\boldsymbol m$  responsible for controlling state updates and outputs. More concretely, we define the computation at time step $t$ as follows [?]:
 
 \begin{equation}
-\begin{split}
-& \boldsymbol g^u = \sigma(\boldsymbol W^u * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
-& \boldsymbol g^f = \sigma(\boldsymbol W^f * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
-& \boldsymbol g^o = \sigma(\boldsymbol W^o * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
-& \boldsymbol g^c = \tanh(\boldsymbol W^c * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
-& \boldsymbol m_t = \boldsymbol g^f \odot \boldsymbol g^u \odot \boldsymbol g^c \\
-& \boldsymbol h_t = \tanh(\boldsymbol g^o \odot \boldsymbol m_{t-1}) \nonumber
-\end{split}
+	\begin{split}
+		& \boldsymbol g^u = \sigma(\boldsymbol W^u * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
+		& \boldsymbol g^f = \sigma(\boldsymbol W^f * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
+		& \boldsymbol g^o = \sigma(\boldsymbol W^o * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
+		& \boldsymbol g^c = \tanh(\boldsymbol W^c * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
+		& \boldsymbol m_t = \boldsymbol g^f \odot \boldsymbol g^u \odot \boldsymbol g^c \\
+		& \boldsymbol h_t = \tanh(\boldsymbol g^o \odot \boldsymbol m_{t-1}) \nonumber
+	\end{split}
 \end{equation}
 
 Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W^u, \boldsymbol W^f, \boldsymbol W^o, \boldsymbol W^c$ are recurrent weight matrices and $I$ is a projection matrix.
@@ -155,11 +155,11 @@ Generalizing the notation above, we can apply batch normalization in a number of
 \subsection{Batch Normalization}
 
 \begin{equation}
-\begin{split}
-& \boldsymbol g = \sigma(\boldsymbol W * \boldsymbol h + BN(\boldsymbol I * \boldsymbol x)) \\
-& \boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h) + BN(\boldsymbol I * \boldsymbol x)) \\
-& \boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h + \boldsymbol I * \boldsymbol x)) \nonumber
-\end{split}
+	\begin{split}
+		& \boldsymbol g = \sigma(\boldsymbol W * \boldsymbol h + BN(\boldsymbol I * \boldsymbol x)) \\
+		& \boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h) + BN(\boldsymbol I * \boldsymbol x)) \\
+		& \boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h + \boldsymbol I * \boldsymbol x)) \nonumber
+	\end{split}
 \end{equation}
 
 \subsection{Temporal Normalization}
@@ -168,6 +168,40 @@ We can extend batch normalization to sequences by calculating a reduction across
 \section{Experiments}
 
 \subsection{Language Modeling}
+
+
+
+{\renewcommand{\arraystretch}{1.4}
+
+\begin{table}
+	\begin{center}
+		\begin{tabular}{lcr}
+  			\hline
+  			
+			\multicolumn{1}{l}{\bf Model}  &\multicolumn{1}{c}{\bf Valid}  &\multicolumn{1}{c}{\bf Test} \\
+  			
+			\hline
+  			
+			\multicolumn{3}{c}{Penn Treebank} \\
+  			
+			\hline
+
+  			Non-regularized LSTM		& 120.7 & 114.5 \\
+  			Non-regularized LSTM (BN)	& 130.0 & 123.9 \\
+
+  			\hline
+
+  			Large regularized LSTM		& 82.2 & \textbf{78.4} \\
+  			Large regularized LSTM (BN)	& \\
+
+  			\hline
+
+		\end{tabular}
+	
+		\caption{[\textit{Bold top and bottom lines}] Word-level perplexity on the Penn Treebank dataset.}
+
+	\end{center}
+\end{table}
 
 
 \subsection{Speech Recognition}
