@@ -146,7 +146,7 @@ LSTMs address the vanishing gradient problem commonly found in RNNs by incorpora
 		& \boldsymbol g^f = \sigma(\boldsymbol W^f * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
 		& \boldsymbol g^o = \sigma(\boldsymbol W^o * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
 		& \boldsymbol g^c = \tanh(\boldsymbol W^c * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
-		& \boldsymbol m_t = \boldsymbol g^f \odot \boldsymbol +  g^u \odot \boldsymbol g^c \\
+		& \boldsymbol m_t = \boldsymbol g^f \odot \boldsymbol +  \boldsymbol g^u \odot \boldsymbol g^c \\
 		& \boldsymbol h_t = \tanh(\boldsymbol g^o \odot \boldsymbol m_{t-1}) \nonumber
 	\end{split}
 \end{equation}
@@ -169,7 +169,7 @@ Generalizing the notation above, we can apply batch normalization in a number of
 
 \begin{equation}
 	\begin{split}
-		& \boldsymbol{\hat x} = \frac{\boldsymbol x - \hat x}{\sigma} \\
+		& \boldsymbol{\hat x} = \frac{\boldsymbol x - \boldsymbol{\hat x}}{\boldsymbol \sigma} \\
 		& BN(x) = \gamma \boldsymbol{\hat x} + \beta
 	\end{split}
 \end{equation}
@@ -232,9 +232,11 @@ The Large LSTM has a hidden size of 1500 for both layers, initialized uniformly 
 
 \section{Discussion}
 
-\textbf{Questions}
-How do we normalize over time?
-Does batch normalization allow for a higher learning rate?
+\section{Questions}
+How do we normalize over time? [I can't do a reduction across time since I would be using the statistics of future words to predict past ones. Can you guys for speech or should we include a problem where we can normalize over time (e.g. sentiment)?]
+
+Does batch normalization allow for a higher learning rate? [Table with learning rates and steps to convergence]
+
 
 
 % References should be produced using the bibtex program from suitable
