@@ -53,13 +53,12 @@ Yoshua Bengio$^\ast{}^1$}
 \maketitle
 %
 \begin{abstract}
-The abstract should appear at the top of the left-hand column of text, about
-0.5 inch (12 mm) below the title area and no more than 3.125 inches (80 mm) in
-length.  Leave a 0.5 inch (12 mm) space between the end of the abstract and the
-beginning of the main text.  The abstract should contain about 100 to 150
-words, and should be identical to the abstract text submitted electronically
-along with the paper cover sheet.  All manuscripts must be in English, printed
-in black ink.
+Training Recurrent Neural Networks (RNNs) is often times prohibitively expensive, particularly 
+for deep architectures. Batch normalization, a method for normalizing intermediate 
+representations of neural networks using batch statistics, has proven to significantly reduce 
+training times of very deep convolutional neural networks. Here, we show that batch normalization 
+can reduce training times of RNNs as well.
+
 \end{abstract}
 %
 \begin{keywords}
@@ -165,6 +164,8 @@ Generalizing the notation above, we can apply batch normalization in a number of
 \subsection{Temporal Normalization}
 We can extend batch normalization to sequences by calculating a reduction across time steps instead of along the batches (or in addition to). 
 
+\subsection{Feature Normalization}
+
 \section{Experiments}
 
 \subsection{Language Modeling}
@@ -213,7 +214,7 @@ The Large LSTM has a hidden size of 1500 for both layers, initialized uniformly 
 
 \section{Discussion}
 
-
+\textbf{Questions}
 How do we normalize over time?
 Does batch normalization allow for a higher learning rate?
 
