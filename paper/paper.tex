@@ -124,9 +124,16 @@ where $m$ is the number of examples in the mini-batch and the value $\epsilon$
 is added to the variance estimate to improve numerical stability.
 
 \section{Recurrent Neural Networks}
+RNNs maintain a hidden vector $\boldsymbol h$, which is updated at time step $t$ as follows:
+ 
+\begin{equation}
+& \boldsymbol h_t = \sigma(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \nonumber
+\end{equation}
+
+Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix.
 
 \subsection{Long Short-Term Memory}
-LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gating functions into their state dynamics [?]. At each time step, an LSTM maintains a \textit{hidden} vector $\boldsymbol h$ and a \textit{memory} vector $\boldsymbol m$  responsible for controlling state updates and outputs. More concretely, we define the computation at time step $t$ as follows [?]:
+LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gating functions into their state dynamics [?]. At each time step, an LSTM maintains a hidden vector $\boldsymbol h$ and a memory vector $\boldsymbol m$  responsible for controlling state updates and outputs. More concretely, we define the computation at time step $t$ as follows [?]:
 
 \begin{equation}
 \begin{split}
@@ -161,6 +168,7 @@ We can extend batch normalization to sequences by calculating a reduction across
 \section{Experiments}
 
 \subsection{Language Modeling}
+
 
 \subsection{Speech Recognition}
 
