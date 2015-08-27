@@ -168,8 +168,13 @@ We can extend batch normalization to sequences by calculating a reduction across
 \section{Experiments}
 
 \subsection{Language Modeling}
+We used the Penn Treebank (PTB) [?] corpus for our language modeling experiments. We use the standard split (929k training words, 73k validation words, and 82k test words) and vocabulary of 10k words. We train a small LSTM and a Large LSTM as described in [?].
 
+Both models consist of two stacked LSTM layers and are trained with stochastic gradient descent with a learning rate of 1 and a mini-batch size of 20.
 
+The small LSTM has a hidden size of 200 for both layers, initialized uniformly in the range [-0.1, 0.1]. We back propagate across 20 time steps and gradients are scaled according to the maximum norm of the gradients whenever the norm is greater than 10 [?]. We train for 15 epochs and halve the learning rate every epoch after the 6th.  
+
+The Large LSTM has a hidden size of 1500 for both layers, initialized uniformly in the range [-0.04, 0.04]. We apply dropout between all layers. We back propagate across 35 time steps and gradients are scaled according to the maximum norm of the gradients whenever the norm is greater than 5 [?]. We train for 55 epochs and divide the learning rate by 1.15 every epoch after the 15th.
 
 {\renewcommand{\arraystretch}{1.4}
 
@@ -178,7 +183,7 @@ We can extend batch normalization to sequences by calculating a reduction across
 		\begin{tabular}{lcr}
   			\hline
   			
-			\multicolumn{1}{l}{\bf Model}  &\multicolumn{1}{c}{\bf Valid}  &\multicolumn{1}{c}{\bf Test} \\
+			\multicolumn{1}{l}{\bf Model}  &\multicolumn{1}{c}{\bf Valid Set}  &\multicolumn{1}{c}{\bf Test Set} \\
   			
 			\hline
   			
@@ -186,13 +191,13 @@ We can extend batch normalization to sequences by calculating a reduction across
   			
 			\hline
 
-  			Non-regularized LSTM		& 120.7 & 114.5 \\
-  			Non-regularized LSTM (BN)	& 130.0 & 123.9 \\
+  			Small LSTM		& 120.7 & 114.5 \\
+  			Small LSTM (BN)	& 130.0 & 123.9 \\
 
   			\hline
 
-  			Large regularized LSTM		& 82.2 & \textbf{78.4} \\
-  			Large regularized LSTM (BN)	& \\
+  			Large LSTM		& 82.2 & \textbf{78.4} \\
+  			Large LSTM (BN)	& \\
 
   			\hline
 
@@ -207,6 +212,11 @@ We can extend batch normalization to sequences by calculating a reduction across
 \subsection{Speech Recognition}
 
 \section{Discussion}
+
+
+How do we normalize over time?
+Does batch normalization allow for a higher learning rate?
+
 
 % References should be produced using the bibtex program from suitable
 % BiBTeX files (here: strings, refs, manuals). The IEEEbib.bst bibliography
