@@ -84,8 +84,8 @@ def apply_to_batches(f, batches):
 # plotly data
 # (move plotly logic to utils)
 data = []
-colors = ['rgb(31, 119, 180)',
-          'rgb(255, 127, 14)']
+colors = ['rgb(44, 160, 44)',
+          'rgb(214, 39, 40)']
 
 
 # train each model
@@ -129,13 +129,13 @@ for model_name, model in models.iteritems():
         train_trace = Scatter(x=range(len(train_costs)),
                               y=train_costs,
                               name='{} (Train)'.format(model_name),
-                              line=Line(color=color))
+                              line=Line(color=color, width=1))
 
         # plot valid results
         valid_trace = Scatter(x=range(len(valid_costs)),
                               y=valid_costs,
                               name='{} (Valid)'.format(model_name),
-                              line=Line(color=color, dash='dot'))
+                              line=Line(color=color, dash='dot', width=1))
 
         # collect traces
         data.extend([train_trace, valid_trace])
