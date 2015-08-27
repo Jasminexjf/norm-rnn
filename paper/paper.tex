@@ -129,7 +129,7 @@ RNNs maintain a hidden vector $\boldsymbol h$, which is updated at time step $t$
 	\boldsymbol h_t = \sigma(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \nonumber
 \end{equation}
 
-Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix. Stacking RNNs, such that the hidden vector $\boldysmbol h$ of a lower layer becomes the input of an upper layer is one method for creating deeper architectures [?]
+Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix. Stacking RNNs, such that the hidden vector $\boldsymbol h$ of a lower layer becomes the input of an upper layer is one method for creating deeper architectures [?]
 
 \begin{equation}
 	\boldsymbol h_t^{l} = \sigma(\boldsymbol W * \boldsymbol h_{t-1}^{l} + \boldsymbol I * \boldsymbol h_t^{l-1}) \nonumber
@@ -167,10 +167,23 @@ Generalizing the notation above, we can apply batch normalization in a number of
 	\end{split}
 \end{equation}
 
+\begin{equation}
+	\begin{split}
+		& \boldsymbol{\hat x} = \frac{\boldsymbol x - \hat x}{\sigma} \\
+		& BN(x) = \gamma \boldsymbol{\hat x} + \beta
+	\end{split}
+\end{equation}
+
+Where $\gamma$ and $\beta$ are learned parameters responsible for restoring the representational capacity of the layer after normalization and $\hat x, \sigma$ are the the sample mean and standard deviation of $x$ of the mini-batch. Typically, batch normalization is applied prior to a non-linearity, giving a layer the form
+
+\begin{equation}
+	\boldsymbol y = \sigma(BN(\boldsymbol W * \boldsymbol x))
+\end{equation}
+
+In this case $\sigma$ is the sigmoid non-linearity.
+
 \subsection{Temporal Normalization}
 We can extend batch normalization to sequences by calculating a reduction across time steps instead of along the batches (or in addition to). 
-
-\subsection{Feature Normalization}
 
 \section{Experiments}
 
@@ -214,7 +227,6 @@ The Large LSTM has a hidden size of 1500 for both layers, initialized uniformly 
 
 	\end{center}
 \end{table}
-
 
 \subsection{Speech Recognition}
 
