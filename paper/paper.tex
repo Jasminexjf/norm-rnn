@@ -126,16 +126,16 @@ is added to the variance estimate to improve numerical stability.
 \section{Recurrent Neural Networks}
 
 \subsection{Long Short-Term Memory}
-LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gate functions into their state dynamics [?]. At each time step, an LSTM maintains a \textit{hidden} vector $\boldsymbol h$ and a \textit{memory} vector $\boldsymbol m$  vector responsible for controlling information flow through the network. More concretely, we define the computation as time step $i$ as follows [?]:
+LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gating functions into their state dynamics [?]. At each time step, an LSTM maintains a \textit{hidden} vector $\boldsymbol h$ and a \textit{memory} vector $\boldsymbol m$  responsible for controlling state updates and outputs. More concretely, we define the computation at time step $t$ as follows [?]:
 
 \begin{equation}
 \begin{split}
-& \boldsymbol g^u = \sigma(\boldsymbol W^u * \boldsymbol h + \boldsymbol I * \boldsymbol x) \\
-& \boldsymbol g^f = \sigma(\boldsymbol W^f * \boldsymbol h + \boldsymbol I * \boldsymbol x) \\
-& \boldsymbol g^o = \sigma(\boldsymbol W^o * \boldsymbol h + \boldsymbol I * \boldsymbol x) \\
-& \boldsymbol g^c = \tanh(\boldsymbol W^c * \boldsymbol h + \boldsymbol I * \boldsymbol x) \\
-& \boldsymbol m' = \boldsymbol g^f \odot \boldsymbol g^u \odot \boldsymbol g^c \\
-& \boldsymbol h' = \tanh(\boldsymbol g^o \odot m') \nonumber
+& \boldsymbol g^u = \sigma(\boldsymbol W^u * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
+& \boldsymbol g^f = \sigma(\boldsymbol W^f * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
+& \boldsymbol g^o = \sigma(\boldsymbol W^o * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
+& \boldsymbol g^c = \tanh(\boldsymbol W^c * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
+& \boldsymbol m_t = \boldsymbol g^f \odot \boldsymbol g^u \odot \boldsymbol g^c \\
+& \boldsymbol h_t = \tanh(\boldsymbol g^o \odot \boldsymbol m_{t-1}) \nonumber
 \end{split}
 \end{equation}
 
@@ -143,14 +143,26 @@ Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W^u, \boldsymbol W
 
 \section{Where to Normalize}
 
-Generalizing the notation above, we can apply batch normalization in a number of places in the LSTM equations.
+Generalizing the notation above, we can apply batch normalization in a number of places in the LSTM equations. In our experiments, we applied batch normalization to the input projection, hidden state transition or both:
+
+\subsection{Batch Normalization}
 
 \begin{equation}
-\boldsymbol g = \sigma(\boldsymbol W * \boldsymbol h + BN(\boldsymbol I * \boldsymbol x)) \\
+\begin{split}
+& \boldsymbol g = \sigma(\boldsymbol W * \boldsymbol h + BN(\boldsymbol I * \boldsymbol x)) \\
+& \boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h) + BN(\boldsymbol I * \boldsymbol x)) \\
+& \boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h + \boldsymbol I * \boldsymbol x)) \nonumber
+\end{split}
 \end{equation}
 
+\subsection{Temporal Normalization}
+We can extend batch normalization to sequences by calculating a reduction across time steps instead of along the batches (or in addition to). 
 
 \section{Experiments}
+
+\subsection{Language Modeling}
+
+\subsection{Speech Recognition}
 
 \section{Discussion}
 
