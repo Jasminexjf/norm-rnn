@@ -53,9 +53,8 @@ models['Without Batch Normalization'] = List([
     LSTM(layer_size, layer_size, weight_init=weight_init),
     Dropout(drop_prob),
     LSTM(layer_size, layer_size, weight_init=weight_init),
-    Linear(layer_size, vocab_size, Identity(), weight_init=weight_init),
     Dropout(drop_prob),
-    Softmax()])
+    Linear(layer_size, vocab_size, weight_init=weight_init)])
 
 models['With Batch Normalization'] = List([
     Embed(vocab_size, layer_size, weight_init=weight_init),
@@ -63,9 +62,8 @@ models['With Batch Normalization'] = List([
     BNLSTM(layer_size, layer_size, weight_init=weight_init),
     Dropout(drop_prob),
     BNLSTM(layer_size, layer_size, weight_init=weight_init),
-    Linear(layer_size, vocab_size, Identity(), weight_init=weight_init),
     Dropout(drop_prob),
-    Softmax()])
+    Linear(layer_size, vocab_size, weight_init=weight_init)])
 
 # optimizer
 grad = MaxNorm()
