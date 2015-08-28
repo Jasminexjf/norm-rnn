@@ -155,17 +155,7 @@ Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W^u, \boldsymbol W
 
 \section{Where to Normalize}
 
-Generalizing the notation above, we can apply batch normalization in a number of places in the LSTM equations. In our experiments, we applied batch normalization to the input projection, hidden state transition or both:
-
-\subsection{Batch Normalization}
-
-\begin{equation}
-	\begin{split}
-		& \boldsymbol g = \sigma(\boldsymbol W * \boldsymbol h + BN(\boldsymbol I * \boldsymbol x)) \\
-		& \boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h) + BN(\boldsymbol I * \boldsymbol x)) \\
-		& \boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h + \boldsymbol I * \boldsymbol x)) \nonumber
-	\end{split}
-\end{equation}
+We use the following shorthand for batch normalization
 
 \begin{equation}
 	\begin{split}
@@ -182,8 +172,42 @@ Where $\gamma$ and $\beta$ are learned parameters responsible for restoring the 
 
 In this case $\sigma$ is the sigmoid non-linearity.
 
+The more complicated state transition of LSTMs as compared to CNNs allows for a number of batch normalized variants. With respect to batch normalization, we applied the normalization procedure in a number of different locations in the LSTM equations.
+
+\subsection{Projection Normalization} The simplest method for normalizing LSTMs is applying batch normalization only on the input to hidden transition, as these are independent of previous hidden states. Generalizing the gate equations given above, we can express this form as
+
+\begin{equation}
+	\boldsymbol g = \sigma(\boldsymbol W * \boldsymbol h + BN(\boldsymbol I * \boldsymbol x)) \\
+\end{equation}
+ 
+Where batch normalization is applied after the input projection $\boldsymbol I$ and then summed with the new hidden state $\boldsymbol h$ before applying the gate non-linearity.
+
+\subsection{Hidden Normalization} Similarly, we can normalize only the the hidden state transitions by applying batch normalization after applying the recurrent weight matrix $\boldsymbol W$ to the previous hidden state $\boldsymbol h_{t-1}$
+
+\begin{equation}
+	\boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h_{t-1}) + \boldsymbol I * \boldsymbol x) \\
+\end{equation}
+
+I haven't got this to work yet but I think it should be possible. Things to try: lower learning rate and only normalizing the pre-tanh activation. 
+
+\subsection{Gate Normalization} Combining the two methods above, we can normalize all the gates, leading to 
+
+\begin{equation}
+	\boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h + \boldsymbol I * \boldsymbol x)) \nonumber
+\end{equation}
+
 \subsection{Temporal Normalization}
-We can extend batch normalization to sequences by calculating a reduction across time steps instead of along the batches (or in addition to). 
+We can extend batch normalization to sequences by calculating a reduction across steps in the sequence instead of along the batches (or in addition to). Given a sequence of length $t$, we normalize across the sequence as follows
+
+\begin{equation}
+	\begin{split}
+		& \boldsymbol{\hat x_t} = \frac{\boldsymbol x - \frac{1}{t} \sum \boldsymbol x_t}{\sqrt{Var(\boldsymbol x_t)}} \\
+		& TN(x) = \gamma \boldsymbol{\hat x_t} + \beta
+	\end{split}
+\end{equation}
+
+As a note of caution, one must take care not to normalize across the time information in tasks where this leads to using future statistics to make past predictions. For example, RNN language models usually predict the next token at each time step. If time normalization is used in this case, the model learns to use future time steps to make predictions about the next token, which equates to using labeled data to make predictions.
+
 
 \section{Experiments}
 
@@ -245,6 +269,7 @@ How do we normalize over time? [I can't do a reduction across time since I would
 
 Does batch normalization allow for a higher learning rate? [Table with learning rates and steps to convergence]
 
+Shuffling data for language modeling? 
 
 
 % References should be produced using the bibtex program from suitable
