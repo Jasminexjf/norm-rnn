@@ -129,7 +129,13 @@ RNNs maintain a hidden vector $\boldsymbol h$, which is updated at time step $t$
 	\boldsymbol h_t = \sigma(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \nonumber
 \end{equation}
 
-Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix. Stacking RNNs, such that the hidden vector $\boldsymbol h$ of a lower layer becomes the input of an upper layer is one method for creating deeper architectures [?]
+Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix. The hidden state $\boldsymbol h$ is then used at each time step in the case of language modeling or at the end of the sequence to make a prediction $\boldsymbol y$
+
+\begin{equation}
+	\boldsymbol y_t = softmax(\boldsymbol W * \boldsymbol h_{t-1}) \nonumber
+\end{equation}
+
+where $softmax$ provides a normalized probability distribution over the possible classes and $\boldsymbol W$ is a weight matrix. By using $\boldsymbol h$ as the input to another RNN, we can stack RNNs, creating deeper architectures [?]
 
 \begin{equation}
 	\boldsymbol h_t^{l} = \sigma(\boldsymbol W * \boldsymbol h_{t-1}^{l} + \boldsymbol I * \boldsymbol h_t^{l-1}) \nonumber
@@ -188,7 +194,7 @@ Where batch normalization is applied after the input projection $\boldsymbol I$ 
 	\boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h_{t-1}) + \boldsymbol I * \boldsymbol x) \\
 \end{equation}
 
-I haven't got this to work yet but I think it should be possible. Things to try: lower learning rate and only normalizing the pre-tanh activation. 
+I haven't got this to work yet but I think it should be possible. Things to try: lower learning rate, only normalizing the pre-tanh activation, adaptive learning rates (RMSprop). 
 
 \subsection{Gate Normalization} Combining the two methods above, we can normalize all the gates, leading to 
 
