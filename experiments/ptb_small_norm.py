@@ -1,5 +1,4 @@
 import numpy as np
-np.random.seed(0)
 
 # lasagne loader (merge into datasets)
 from tests.test_dataset import PennTreebank
@@ -41,12 +40,14 @@ test_batches = len(dataset.X_test) / batch_size
 from collections import OrderedDict
 models = OrderedDict()
 
+np.random.seed(0)
 models['Without Batch Normalization'] = List([
     Embed(vocab_size, layer_size),
     LSTM(layer_size, layer_size),
     LSTM(layer_size, layer_size),
     Linear(layer_size, vocab_size)])
 
+np.random.seed(0)
 models['With Batch Normalization'] = List([
     Embed(vocab_size, layer_size),
     BNLSTM(layer_size, layer_size),
@@ -75,7 +76,7 @@ def apply_to_batches(f, batches):
     # reset LSTM layer
     for layer in model.layers:
         if isinstance(layer, LSTM):
-            # this resets batch-norm to (it probably shouldn't)
+            # this resets batch-norm in LSTM (it probably shouldn't)
             layer.set_state(batch_size)
 
     return np.mean(perplexity_list)
@@ -90,6 +91,10 @@ colors = ['rgb(44, 160, 44)',
 
 # train each model
 for model_name, model in models.iteritems():
+
+    if model_name == 'Without Batch Normalization':
+        continue
+
     # set LSTM and BN states
     for layer in model.layers:
         if isinstance(layer, LSTM):
