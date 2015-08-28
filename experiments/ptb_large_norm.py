@@ -23,9 +23,9 @@ layer_size = 1500
 drop_prob = 0.65
 
 # data params
-time_steps = 35
+time_steps = 20
 batch_size = 20
-epochs = 55
+epochs = 50
 
 # optimizer params
 learning_rate = 1
