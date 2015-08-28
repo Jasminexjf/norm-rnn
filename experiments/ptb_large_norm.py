@@ -43,28 +43,29 @@ test_batches = len(dataset.X_test) / batch_size
 # weight init
 weight_init = Uniform(init_range)
 
-# models
-models = {
-    'Without Batch Normalization':
-        List([Embed(vocab_size, layer_size, weight_init=weight_init),
-              Dropout(drop_prob),
-              LSTM(layer_size, layer_size, weight_init=weight_init),
-              Dropout(drop_prob),
-              LSTM(layer_size, layer_size, weight_init=weight_init),
-              Linear(layer_size, vocab_size, Identity(), weight_init=weight_init),
-              Dropout(drop_prob),
-              Softmax()]),
+# model config
+from collections import OrderedDict
+models = OrderedDict()
 
-    'With Batch Normalization':
-        List([Embed(vocab_size, layer_size, weight_init=weight_init),
-              Dropout(drop_prob),
-              BNLSTM(layer_size, layer_size, weight_init=weight_init),
-              Dropout(drop_prob),
-              BNLSTM(layer_size, layer_size, weight_init=weight_init),
-              Linear(layer_size, vocab_size, Identity(), weight_init=weight_init),
-              Dropout(drop_prob),
-              Softmax()])
-}
+models['Without Batch Normalization'] = List([
+    Embed(vocab_size, layer_size, weight_init=weight_init),
+    Dropout(drop_prob),
+    LSTM(layer_size, layer_size, weight_init=weight_init),
+    Dropout(drop_prob),
+    LSTM(layer_size, layer_size, weight_init=weight_init),
+    Linear(layer_size, vocab_size, Identity(), weight_init=weight_init),
+    Dropout(drop_prob),
+    Softmax()])
+
+models['With Batch Normalization'] = List([
+    Embed(vocab_size, layer_size, weight_init=weight_init),
+    Dropout(drop_prob),
+    BNLSTM(layer_size, layer_size, weight_init=weight_init),
+    Dropout(drop_prob),
+    BNLSTM(layer_size, layer_size, weight_init=weight_init),
+    Linear(layer_size, vocab_size, Identity(), weight_init=weight_init),
+    Dropout(drop_prob),
+    Softmax()])
 
 # optimizer
 grad = MaxNorm()
