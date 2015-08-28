@@ -196,6 +196,14 @@ The small LSTM has a hidden size of 200 for both layers, initialized uniformly i
 
 The Large LSTM has a hidden size of 1500 for both layers, initialized uniformly in the range [-0.04, 0.04]. We apply dropout between all layers. We back propagate across 35 time steps and gradients are scaled according to the maximum norm of the gradients whenever the norm is greater than 5 [?]. We train for 55 epochs and divide the learning rate by 1.15 every epoch after the 15th.
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=100mm]{ptb_small_norm_plot.png}
+  \caption{[Plot iterations instead of epochs, move legend to bottom and make font//lines larger] Small LSTM on Penn Treebank with and without batch normalization.}
+  \label{overflow}
+\end{figure}
+
+
 {\renewcommand{\arraystretch}{1.4}
 
 \begin{table}
