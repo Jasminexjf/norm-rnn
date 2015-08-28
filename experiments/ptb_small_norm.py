@@ -127,6 +127,25 @@ for model_name, model in models.iteritems():
     fit = compile_model_lasagne(model, (dataset.X_test, dataset.y_test), optimizer)
     dynamic_cost = apply_to_batches(fit, test_batches)
 
+    # file name
+    from os.path import splitext, basename
+    file_name = splitext(basename(__file__))[0]
+
+    # write results
+    with open('{}.txt'.format(file_name), 'w') as output_file:
+        # write model name
+        output_file.write('model_name({})\n'.format(model_name))
+
+        # write train costs
+        output_file.write('data_split({})\n'.format('train'))
+        for cost in train_costs:
+            output_file.write('{}\n'.format(cost))
+
+        # write valid costs
+        output_file.write('data_split({})\n'.format('valid'))
+        for cost in train_costs:
+            output_file.write('{}\n'.format(cost))
+
     if plotly_is_installed:
         color = colors.pop()
 
