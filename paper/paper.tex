@@ -126,10 +126,10 @@ is added to the variance estimate to improve numerical stability.
 RNNs maintain a hidden vector $\boldsymbol h$, which is updated at time step $t$ as follows:
  
 \begin{equation}
-	\boldsymbol h_t = \sigma(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \nonumber
+	\boldsymbol h_t = \tanh(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \nonumber
 \end{equation}
 
-Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix. The hidden state $\boldsymbol h$ is then used at each time step in the case of language modeling or at the end of the sequence to make a prediction $\boldsymbol y$
+Where $\tanh$ is the hyperbolic tangent function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix. The hidden state $\boldsymbol h$ is then used at each time step in the case of language modeling or at the end of the sequence to make a prediction $\boldsymbol y$
 
 \begin{equation}
 	\boldsymbol y_t = softmax(\boldsymbol W * \boldsymbol h_{t-1}) \nonumber
@@ -188,7 +188,7 @@ The more complicated state transition of LSTMs as compared to CNNs allows for a 
  
 Where batch normalization is applied after the input projection $\boldsymbol I$ and then summed with the new hidden state $\boldsymbol h$ before applying the gate non-linearity.
 
-\subsection{Hidden Normalization} Similarly, we can normalize only the the hidden state transitions by applying batch normalization after applying the recurrent weight matrix $\boldsymbol W$ to the previous hidden state $\boldsymbol h_{t-1}$
+\subsection{State Normalization} Similarly, we can normalize only the the hidden state transitions by applying batch normalization after applying the recurrent weight matrix $\boldsymbol W$ to the previous hidden state $\boldsymbol h_{t-1}$
 
 \begin{equation}
 	\boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h_{t-1}) + \boldsymbol I * \boldsymbol x) \\
@@ -214,6 +214,8 @@ We can extend batch normalization to sequences by calculating a reduction across
 
 As a note of caution, one must take care not to normalize across the time information in tasks where this leads to using future statistics to make past predictions. For example, RNN language models usually predict the next token at each time step. If time normalization is used in this case, the model learns to use future time steps to make predictions about the next token, which equates to using labeled data to make predictions.
 
+\subsection{Adaptive Learning Rates} One challenge of normalizing RNNs is that by normalizing individual components, we change the learning dynamics of that component in relation to the others. In their experiments, [?] noted that batch normalization allows for much higher learning rates. However, in the case where we normalized the input projection and optimize with stochastic gradient descent, a higher learning rate leads to vanishing gradients because negatively effects the recurrent weight updates. To address this, we can use a different learning rate for these transition or employ an optimizer with adaptive learning rates, such as RMSprop.
+
 
 \section{Experiments}
 
@@ -229,7 +231,7 @@ The Large LSTM has a hidden size of 1500 for both layers, initialized uniformly 
 \begin{figure}[t]
   \centering
   \includegraphics[width=100mm]{ptb_small_norm_plot.png}
-  \caption{[Plot iterations instead of epochs, move legend to bottom and make font//lines larger] Small LSTM on Penn Treebank with and without batch normalization.}
+  \caption{[Plot iterations instead of epochs, move legend to bottom and make font/lines larger] Small LSTM on Penn Treebank with and without batch normalization.}
   \label{overflow}
 \end{figure}
 
