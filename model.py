@@ -33,6 +33,10 @@ class List(object):
         return x
 
     def compile(self, dataset, optimizer=None):
+        self.reset_state(dataset.batch_size, dataset.time_steps)
+        self.batch_size = dataset.batch_size
+        self.time_steps = dataset.time_steps
+
         # symbolic variables
         x = T.imatrix()
         y = T.imatrix()
@@ -70,7 +74,7 @@ class List(object):
             self.fit_batches = len(dataset.X_train.get_value()) / dataset.batch_size
 
     def train(self, epochs):
-        for epoch in range(epochs):
+        for epoch in range(1, epochs + 1):
             progress_bar = TrainProgressBar(epoch, self.fit_batches, self.val_batches)
 
             # fit
@@ -84,6 +88,8 @@ class List(object):
             for batch in range(self.val_batches):
                 val_results.append(self.val(batch))
                 progress_bar.val_update(val_results)
+
+            self.reset_state(self.batch_size, self.time_steps)
 
             self.fit_results.append(fit_results)
             self.val_results.append(val_results)
