@@ -1,36 +1,59 @@
 import sys
 import timeit
+import numpy as np
 
 
-class ProgressBar(object):
+class TrainProgressBar(object):
 
-    def __init__(self, iterable, size=60):
-        self.iterable = iterable
-        self.size = size
-        self.remaining = size
-        self.progress = 0
+    def __init__(self, fit_batches, val_batches):
+        self.fit_size = 60 * fit_batches / (fit_batches + val_batches)
+        self.val_size = 60 * val_batches / (fit_batches + val_batches)
+
+        print self.fit_size
+        print self.val_size
+
+        self.fit_batches = fit_batches
+        self.val_batches = val_batches
+
+        self.fit_done = 0
+        self.val_done = 0
+        self.fit_left = self.fit_size
+        self.val_left = self.val_size
+
+        self.fit_perplexity = 0
+        self.val_perplexity = 0
+        self.fit_accuracy = 0
+        self.val_accuracy = 0
+
+        self.begin = timeit.default_timer()
 
     def __str__(self):
-        return '[{}{}] pp({:.2f}) acc({:.2f}%) time({:.2f}s)\r'.format(
-            '#' * self.progress, '.' * self.remaining,
-            self.perplexity, self.accuracy, self.elapsed)
+        return '[{}{} | {}{}] pp({:.2f} | {:.2f}) acc({:.2f}% | {:.2f}%) time({:.2f}s)\r'.format(
+            '#' * self.fit_done, '.' * self.fit_left,
+            '#' * self.val_done, '.' * self.val_left,
+            self.fit_perplexity, self.val_perplexity,
+            self.fit_accuracy, self.val_accuracy,
+            timeit.default_timer() - self.begin
+        )
 
-    def __iter__(self):
-        self.begin = timeit.default_timer()
-        self.perplexity = 0
-        self.accuracy = 0
-        self.elapsed = 0
-        self.display(0)
+    def fit_update(self, fit_results):
+        perplexity_list, accuracy_list = zip(*fit_results)
+        self.fit_perplexity = np.mean(perplexity_list)
+        self.fit_accuracy = np.mean(accuracy_list)
 
-        for i, item in enumerate(self.iterable, 1):
-            yield item
-            self.elapsed = timeit.default_timer() - self.begin
-            self.display(i)
-        print
+        self.fit_done = int(self.fit_size * len(fit_results) / self.fit_batches)
+        self.fit_left = self.fit_size - self.fit_done
 
-    def display(self, current):
-        self.progress = int(self.size * current / len(self.iterable))
-        self.remaining = self.size - self.progress
+        sys.stdout.write(str(self))
+        sys.stdout.flush()
+
+    def val_update(self, val_results):
+        perplexity_list, accuracy_list = zip(*val_results)
+        self.val_perplexity = np.mean(perplexity_list)
+        self.val_accuracy = np.mean(accuracy_list)
+
+        self.val_done = int(self.val_size * len(val_results) / self.val_batches)
+        self.val_left = self.val_size - self.val_done
 
         sys.stdout.write(str(self))
         sys.stdout.flush()
