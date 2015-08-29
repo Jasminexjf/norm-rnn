@@ -5,12 +5,10 @@ import numpy as np
 
 class TrainProgressBar(object):
 
-    def __init__(self, fit_batches, val_batches):
+    def __init__(self, epoch, fit_batches, val_batches):
+        self.epoch = epoch
         self.fit_size = 60 * fit_batches / (fit_batches + val_batches)
         self.val_size = 60 * val_batches / (fit_batches + val_batches)
-
-        print self.fit_size
-        print self.val_size
 
         self.fit_batches = fit_batches
         self.val_batches = val_batches
@@ -28,7 +26,8 @@ class TrainProgressBar(object):
         self.begin = timeit.default_timer()
 
     def __str__(self):
-        return '[{}{} | {}{}] pp({:.2f} | {:.2f}) acc({:.2f}% | {:.2f}%) time({:.2f}s)\r'.format(
+        return '{} [{}{} | {}{}] pp({:.2f} | {:.2f}) acc({:.2f}% | {:.2f}%) time({:.2f}s)\r'.format(
+            self.epoch,
             '#' * self.fit_done, '.' * self.fit_left,
             '#' * self.val_done, '.' * self.val_left,
             self.fit_perplexity, self.val_perplexity,
