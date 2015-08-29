@@ -18,24 +18,14 @@ class Dataset(object):
     batch_size = batch_size
 
 
-def test_fit():
+def test_train():
     from model import List
     from layers import Embed, Softmax
     from optimizers import SGD
     model = List([Embed(input_size, layer_size),
                   Softmax()])
     model.compile(Dataset(), SGD())
-    model.fit()
+    model.compile(Dataset(),)
+    model.train(10)
 
-
-def test_val():
-    from model import List
-    from layers import Embed, Softmax
-    model = List([Embed(input_size, layer_size),
-                  Softmax()])
-    model.compile(Dataset())
-    model.val()
-
-
-test_fit()
-test_val()
+test_train()
