@@ -56,8 +56,8 @@ Yoshua Bengio$^\ast{}^1$}
 Training Recurrent Neural Networks (RNNs) is often times prohibitively expensive, particularly 
 for deep architectures. Batch normalization, a method for normalizing intermediate 
 representations of neural networks using batch statistics, has proven to significantly reduce 
-training times of very deep convolutional neural networks. Here, we show that batch normalization 
-can reduce training times of RNNs as well.
+training times of very deep convolutional neural networks. Here, we show how to apply batch
+normalization to RNNs, which leads to faster convergence.
 
 \end{abstract}
 %
@@ -67,66 +67,48 @@ batch normalization, RNN, optimization, speech recognition, language model
 %
 \section{Introduction}
 
-Recurrent Neural Networks (RNNs) have been used with great success to
-obtain good or even state-of-the-art performance on a variety of tasks including phoneme
-recognition \citep{graves2013speech}, language modelling
-\citep{mikolov2012thesis}, machine translation
-\citep{sutskever2014sequence,bahdanau2014,cho2014properties,kalchbrenner2013}
-and handwriting recognition \citep{graves2009offline}.
-Many of these systems employ \emph{deep} RNN architectures in which multiple
-RNNs are stacked on top of each other.
-% TODO: talk about draw and image to caption?
-Unfortunately, RNNs tend to be harder to train than their feed-forward
-counterparts and less suitable for parallelization. This often causes the
-training of RNNs on large data sets to be a very time consuming process.
-This can be especially problematic for stacks of RNNs in which gradients have
-to be propagated non only through time but also through depth.
+Recurrent Neural Networks (RNNs) have received renewed interest due to their recent successes across a number of domains. In speech recognition, RNNs are able to learn mappings from speech to text, matching state of the art without the need for an alignment model [?]. In machine translation, encoder-decoder, or sequence-to-sequence models, are able map arbitrary length sequences of one language to another, learning the alignment on the fly. For language models, RNNs have recent been shown to learn expressive semantic embeddings and the ability to model long term grammatical dependencies, such as opening and closing parenthesis [?].
 
-Recently, a method called \emph{Batch Normalization} was proposed to aid the
-training of Deep Neural Networks (DNNs) \citep{ioffe2015} and it was shown to
-greatly reduce the number of weight updates required to achieve
-state-of-the-art performance on the ImageNet task.
-In this paper, we investigate how Batch Normalization can be used to train RNNs
-more efficiently. One of the questions one needs to answer is at which
-locations of the networks the normalization should be applied.
+Despite the expressiveness of these models, the training cost for large datasets and deep architectures of stacked RNNs can be prohibitively expensive, often times an order of magnitude greater than other models [?]. Because of this, recent work has explored methods for parallelizing RNNs across multiple GPUs. In [?], a RNN was distributed layer wise across 8 GPUs, with the softmax taking half of the GPUs. Similarly, in [?], a RNN was distributed across time, with the forward and backward pass of a Bi-Directional RNN layer being split in half. However, due to the sequential nature of RNNs, the speedups of multiple GPUs is far from linear.
+
+Another way to reduce training times is through a better conditioned optimization. Standardizing or whitening of input data has long been known to improve convergence of optimization methods [?]. Extending this idea to multi-layered networks suggests that normalizing or whitening intermediate representations can similarly improve convergence. However, naively applying these transforms would be extremely costly. In [?], batch normalization was used to standardize intermediate representations by approximating the population statistics with the min-batch. Similarly, in [?], showed that by minimizing the natural gradient and calculating ?, one can go one step further and whiten intermediate representations.
+
+These methods reduced training times of Convolutional Neural Networks (CNNs) by an order of magnitude and additionallly provided a regularization constraint. In this paper, we explore how to leverage normalization in RNNs and show that training time can be significantly reduced.
 
 \section{Batch Normalization}
 
-The motivation behind Batch Normalization is based on the hypothesis that an
-important obstacle in way of efficient DNN training is what the original
-authors refer to as \emph{covariate drift}. The idea is that as the parameters
-in the lower layers change, the distribution of their activations changes as
-well, essentially requiring the layer above to adapt to an ever changing input
-distribution. As the name suggests, Batch Normalization combats this problem by
-\emph{normalizing} the input distributions of each layer, using mean and
-variance statistics obtained from small subsets of data referred to as
-\emph{batches}.
+In optimization, standardization or whitening is a common procedure proven to reduce asymptotic convergence rates. By better conditioning the optimization procedure, algorithms like gradient descent are able to take better steps in the direction of the minimum. Extending the idea to deep neural networks, one can think of an arbitrary layer as receiving an input distribution from the previous layer. Normally, this distribution changes every update, making layer responsible, not only for learning a good representation but for adapting to a changing distribution as well. The changing distribution of the intermediate distributions of a network is termed covariate drift and reducing this drift is hypothesized to be the reason why batch normalization significantly reduces training times.
 
-Let $\mathbf{x}$ be a $d$-dimensional input vector with elements $(x_1, x_2, \cdots, x_d)$ and let $\mathbf{\hat{x}}$ be the vector obtained after normalizing each element of $\mathbf{x}$ using
+Since, calculating population statistics over a large dataset after every update is infeasible, batch normalization approximates them with sample statistics drawn from a mini-batch. Given a batch of samples $\x_1, \dots \x_n$, we can calculate the sample mean and sample standard deviation as
+
 \begin{equation}
-\hat{x}_k = \frac{x_k - \mathrm{E}[x_k]}{\sqrt{\text{Var}(x_k)}},
+	\begin{split}
+		& \bar \x = \frac{1}{n} \sum_i^n \x_i \\
+		& \boldsymbol{\sigma} = \frac{1}{n} = \sum (\x_i - \hat \x)
+	\end{split}
 \end{equation}
-where the expectation $\mathbf{E}[\cdot]$ and variance $\text{Var}(\cdot)$ are
-approximated using sample statistic from the current mini-batch.
-To avoid that the normalization limits the range of mappings the layer can represent, the final transformation is defined as
+
+and using these statistics, we can standardize the data as follows
+
 \begin{equation}
-y_k = \gamma_k \hat{x}_k + \beta_k,
+	\hat \x = \frac{\x - \bar \x}{\boldsymbol \sigma}
 \end{equation}
-where $\gamma_k$ and $\beta_k$ are trainable parameters that can potentially
-learn to undo the normalization transformation again if needed.
-The expected value and variance approximations for each batch $\mathcal{B}$ are computed as
-\begin{align}
-\mu_{\mathcal{B}} &= \frac{1}{m}\sum_{i=1}^{m} x_i,\\
-\sigma^2_{\mathcal{B}} &= \epsilon + \frac{1}{m}\sum_{i=1}^{m} (x_i - \mu_{\mathcal{B}}),\\
-\end{align}
-where $m$ is the number of examples in the mini-batch and the value $\epsilon$
-is added to the variance estimate to improve numerical stability.
+
+However, by simply standardizing the intermediate representation, the representational power of the layer is changed. To account for this, batch normalization introduces additional learnable parameters $\gamma$ and $\beta$, which respectively scale and shift the data, leading to a layer of the form
+
+\begin{equation}
+	BN(x) = \gamma \hat \x + \beta
+\end{equation}
+
+By setting $\gamma$ to the standard deviation and $\beta$ to the expectation, we can recover the original layer representation.
+
+At test time, we can calculate mean and sigma in a number of ways. The simplest is to use a validation batch as was done during training. Alternatively, population statistics can be calculated at the end of training or during training by maintaining a running average calculated over each mini-batch seen during training.
 
 \section{Recurrent Neural Networks}
 RNNs maintain a hidden vector $\boldsymbol h$, which is updated at time step $t$ as follows:
  
 \begin{equation}
-	\boldsymbol h_t = \tanh(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \nonumber
+	\boldsymbol h_t = \tanh(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \x_t) \nonumber
 \end{equation}
 
 Where $\tanh$ is the hyperbolic tangent function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix. The hidden state $\boldsymbol h$ is then used at each time step in the case of language modeling or at the end of the sequence to make a prediction $\boldsymbol y$
@@ -148,42 +130,25 @@ LSTMs address the vanishing gradient problem commonly found in RNNs by incorpora
 
 \begin{equation}
 	\begin{split}
-		& \boldsymbol g^u = \sigma(\boldsymbol W^u * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
-		& \boldsymbol g^f = \sigma(\boldsymbol W^f * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
-		& \boldsymbol g^o = \sigma(\boldsymbol W^o * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
-		& \boldsymbol g^c = \tanh(\boldsymbol W^c * \boldsymbol h_{t-1} + \boldsymbol I * \boldsymbol x_t) \\
+		& \boldsymbol g^u = \sigma(\boldsymbol W^u * \boldsymbol h_{t-1} + \boldsymbol I^u * \x_t) \\
+		& \boldsymbol g^f = \sigma(\boldsymbol W^f * \boldsymbol h_{t-1} + \boldsymbol I^f * \x_t) \\
+		& \boldsymbol g^o = \sigma(\boldsymbol W^o * \boldsymbol h_{t-1} + \boldsymbol I^o * \x_t) \\
+		& \boldsymbol g^c = \tanh(\boldsymbol W^c * \boldsymbol h_{t-1} + \boldsymbol I^c * \x_t) \\
 		& \boldsymbol m_t = \boldsymbol g^f \odot \boldsymbol +  \boldsymbol g^u \odot \boldsymbol g^c \\
 		& \boldsymbol h_t = \tanh(\boldsymbol g^o \odot \boldsymbol m_{t-1}) \nonumber
 	\end{split}
 \end{equation}
 
-Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W^u, \boldsymbol W^f, \boldsymbol W^o, \boldsymbol W^c$ are recurrent weight matrices and $I$ is a projection matrix.
+Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W^u, \boldsymbol W^f, \boldsymbol W^o, \boldsymbol W^c$ are recurrent weight matrices and $\boldsymbol I^u, \boldsymbol I^f, \boldsymbol I^o, \boldsymbol I^c$ is are projection matrices.
 
-\section{Where to Normalize}
-
-We use the following shorthand for batch normalization
-
-\begin{equation}
-	\begin{split}
-		& \boldsymbol{\hat x} = \frac{\boldsymbol x - \boldsymbol{\hat x}}{\boldsymbol \sigma} \\
-		& BN(x) = \gamma \boldsymbol{\hat x} + \beta
-	\end{split}
-\end{equation}
-
-Where $\gamma$ and $\beta$ are learned parameters responsible for restoring the representational capacity of the layer after normalization and $\hat x, \sigma$ are the the sample mean and standard deviation of $x$ of the mini-batch. Typically, batch normalization is applied prior to a non-linearity, giving a layer the form
-
-\begin{equation}
-	\boldsymbol y = \sigma(BN(\boldsymbol W * \boldsymbol x))
-\end{equation}
-
-In this case $\sigma$ is the sigmoid non-linearity.
+\section{Normalization}
 
 The more complicated state transition of LSTMs as compared to CNNs allows for a number of batch normalized variants. With respect to batch normalization, we applied the normalization procedure in a number of different locations in the LSTM equations.
 
 \subsection{Projection Normalization} The simplest method for normalizing LSTMs is applying batch normalization only on the input to hidden transition, as these are independent of previous hidden states. Generalizing the gate equations given above, we can express this form as
 
 \begin{equation}
-	\boldsymbol g = \sigma(\boldsymbol W * \boldsymbol h + BN(\boldsymbol I * \boldsymbol x)) \\
+	\boldsymbol g = \sigma(\boldsymbol W * \boldsymbol h + BN(\boldsymbol I * \x)) \\
 \end{equation}
  
 Where batch normalization is applied after the input projection $\boldsymbol I$ and then summed with the new hidden state $\boldsymbol h$ before applying the gate non-linearity.
@@ -191,15 +156,13 @@ Where batch normalization is applied after the input projection $\boldsymbol I$ 
 \subsection{State Normalization} Similarly, we can normalize only the the hidden state transitions by applying batch normalization after applying the recurrent weight matrix $\boldsymbol W$ to the previous hidden state $\boldsymbol h_{t-1}$
 
 \begin{equation}
-	\boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h_{t-1}) + \boldsymbol I * \boldsymbol x) \\
-\end{equation}
-
-I haven't got this to work yet but I think it should be possible. Things to try: lower learning rate, only normalizing the pre-tanh activation, adaptive learning rates (RMSprop). 
+	\boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h_{t-1}) + \boldsymbol I * \x) \\
+\end{equation} 
 
 \subsection{Gate Normalization} Combining the two methods above, we can normalize all the gates, leading to 
 
 \begin{equation}
-	\boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h + \boldsymbol I * \boldsymbol x)) \nonumber
+	\boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h + \boldsymbol I * \x)) \nonumber
 \end{equation}
 
 \subsection{Temporal Normalization}
@@ -207,8 +170,8 @@ We can extend batch normalization to sequences by calculating a reduction across
 
 \begin{equation}
 	\begin{split}
-		& \boldsymbol{\hat x_t} = \frac{\boldsymbol x - \frac{1}{t} \sum \boldsymbol x_t}{\sqrt{Var(\boldsymbol x_t)}} \\
-		& TN(x) = \gamma \boldsymbol{\hat x_t} + \beta
+		& \hat \x_t = \frac{\boldsymbol x - \frac{1}{t} \sum \x_t}{\sqrt{Var(\x_t)}} \\
+		& TN(\x) = \gamma \hat \x_t + \beta
 	\end{split}
 \end{equation}
 
@@ -271,14 +234,6 @@ The Large LSTM has a hidden size of 1500 for both layers, initialized uniformly 
 \subsection{Speech Recognition}
 
 \section{Discussion}
-
-\section{Questions}
-How do we normalize over time? [I can't do a reduction across time since I would be using the statistics of future words to predict past ones. Can you guys for speech or should we include a problem where we can normalize over time (e.g. sentiment)?]
-
-Does batch normalization allow for a higher learning rate? [Table with learning rates and steps to convergence]
-
-Shuffling data for language modeling? 
-
 
 % References should be produced using the bibtex program from suitable
 % BiBTeX files (here: strings, refs, manuals). The IEEEbib.bst bibliography
