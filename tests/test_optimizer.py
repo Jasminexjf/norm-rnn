@@ -3,7 +3,7 @@ import numpy as np
 
 
 def test_sgd():
-    from norm_rnn import SGD
+    from model import SGD
     sgd = SGD()
     p = theano.shared(np.cast[theano.config.floatX](1))
     updates = sgd([p], [p])

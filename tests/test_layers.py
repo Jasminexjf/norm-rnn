@@ -30,7 +30,7 @@ def test_embed():
 
 
 def test_crossentropy():
-    from norm_rnn import CrossEntropy
+    from model import CrossEntropy
 
     x = T.matrix()
     y = T.ivector()
