@@ -17,7 +17,7 @@ layer_size = 200
 learning_rate = 1
 decay_rate = 0.5
 decay_epoch = 4
-max_norm = 15
+max_norm = 5
 epochs = 15
 
 # data
