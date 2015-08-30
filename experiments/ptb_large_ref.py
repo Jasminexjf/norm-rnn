@@ -44,7 +44,12 @@ grad = MaxNorm()
 decay = DecayEvery(decay_epoch * len(dataset.X_train.get_value()), decay_rate)
 optimizer = SGD(learning_rate, grad, decay)
 
-# train
-model.compile(dataset, optimizer)
-model.compile(dataset)
-model.train(epochs)
+
+if __name__ == '__main__':
+    # compile
+    model.compile(dataset, optimizer)
+    model.compile(dataset)
+
+    # train
+    model.train(epochs)
+    model.dump('ptb_large_ref_results.pkl')
