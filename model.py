@@ -84,7 +84,7 @@ class List(object):
                 fit_results.append(self.fit(batch))
                 progress_bar.fit_update(fit_results)
 
-	    self.reset_state(self.batch_size, self.time_steps)
+            self.reset_state(self.batch_size, self.time_steps)
 
             # validate
             val_results = []
@@ -106,7 +106,7 @@ class List(object):
                 pass # layer logic is independent of train/valid
 
     def reset_state(self, batch_size, time_steps):
-	from layers import LSTM
+        from layers import LSTM
         for layer in self.layers:
             if isinstance(layer, LSTM):
                 layer.set_state(batch_size, time_steps)
