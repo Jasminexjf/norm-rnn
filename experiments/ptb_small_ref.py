@@ -33,7 +33,7 @@ model = List([
 
 # optimizer
 grad = MaxNorm(max_norm)
-decay = DecayEvery(decay_epoch * len(dataset.X_train.get_value()), decay_rate)
+decay = DecayEvery(decay_epoch * len(dataset.X_train.get_value()) / batch_size, decay_rate)
 optimizer = SGD(learning_rate, grad, decay)
 
 
