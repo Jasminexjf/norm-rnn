@@ -70,7 +70,7 @@ class List(object):
             # link to pentree.py
             scaled_cost = cost * dataset.time_steps
             grads = [T.grad(scaled_cost, param) for param in self.params]
-            updates = optimizer(self.params, grads)
+            updates.extend(optimizer(self.params, grads))
             self.fit = theano.function([i], (perplexity, accuracy), None, updates, givens)
             self.fit_batches = len(dataset.X_train.get_value()) / dataset.batch_size
 
