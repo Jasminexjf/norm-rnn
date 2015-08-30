@@ -32,7 +32,7 @@ model = List([
     Linear(layer_size, vocab_size)])
 
 # optimizer
-grad = MaxNorm()
+grad = MaxNorm(max_norm)
 decay = DecayEvery(decay_epoch * len(dataset.X_train.get_value()), decay_rate)
 optimizer = SGD(learning_rate, grad, decay)
 
