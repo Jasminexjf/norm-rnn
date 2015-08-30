@@ -56,3 +56,21 @@ class TrainProgressBar(object):
 
         sys.stdout.write(str(self))
         sys.stdout.flush()
+
+
+import cPickle
+
+
+def plot_saved_perplexity(file_names):
+    for file_name in file_names:
+        with open(file_name) as save_file:
+            fit_results, val_results = cPickle.load(save_file)
+            fit_perplexity, fit_accuracy = zip(*fit_results)
+            val_perplexity, val_accuracy = zip(*val_results)
+
+            print '{} (Train)'.format(file_name)
+            for p in fit_perplexity:
+                print p
+            print '{} (Valid)'.format(file_name)
+            for p in val_perplexity:
+                print p

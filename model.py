@@ -94,9 +94,14 @@ class List(object):
 
             self.reset_state(self.batch_size, self.time_steps)
 
-            self.fit_results.append(fit_results)
-            self.val_results.append(val_results)
+            self.fit_results.extend(fit_results)
+            self.val_results.extend(val_results)
             print
+
+    def dump(self, file_name):
+        import cPickle
+        with open(file_name, 'w') as save_file:
+            cPickle.dump((self.fit_results, self.val_results), save_file)
 
     def mode(self, train=True):
         for layer in self.layers:
