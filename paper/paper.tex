@@ -67,11 +67,11 @@ batch normalization, RNN, optimization, speech recognition, language model
 %
 \section{Introduction}
 
-Recurrent Neural Networks (RNNs) have received renewed interest due to their recent successes across a number of domains. In speech recognition, RNNs are able to learn mappings from speech to text, matching state of the art without the need for an alignment model [?]. In machine translation, encoder-decoder, or sequence-to-sequence models, are able map arbitrary length sequences of one language to another, learning the alignment on the fly. For language models, RNNs have recent been shown to learn expressive semantic embeddings and the ability to model long term grammatical dependencies, such as opening and closing parenthesis [?].
+Recurrent Neural Networks (RNNs) have received renewed interest due to their recent successes across a number of domains. In speech recognition, RNNs are able to learn mappings from speech to text, matching state of the art without the need for an alignment model \citep{graves2013speech}. In machine translation, encoder-decoder, or sequence-to-sequence models, are able map arbitrary length sequences of one language to another, learning the alignment on the fly \citep{sutskever2014sequence}. For language models, RNNs have recent been shown to learn expressive semantic embeddings and the ability to model long term grammatical dependencies, such as opening and closing parenthesis \citep{mikolov2012thesis}.
 
-Despite the expressiveness of these models, the training cost for large datasets and deep architectures of stacked RNNs can be prohibitively expensive, often times an order of magnitude greater than other models [?]. Because of this, recent work has explored methods for parallelizing RNNs across multiple GPUs. In [?], a RNN was distributed layer wise across 8 GPUs, with the softmax taking half of the GPUs. Similarly, in [?], a RNN was distributed across time, with the forward and backward pass of a Bi-Directional RNN layer being split in half. However, due to the sequential nature of RNNs, the speedups of multiple GPUs is far from linear.
+Despite the expressiveness of these models, the training cost for large datasets and deep architectures of stacked RNNs can be prohibitively expensive, often times an order of magnitude greater than other models \citep{williams2015scaling}. Because of this, recent work has explored methods for parallelizing RNNs across multiple GPUs. One approach is to distribute deep RNNs layer-wise. \citep{sutskever2014sequence}. Alternatively,  a RNN was distributed across time, with the forward and backward pass of a Bi-Directional RNN layer being split in half \citep{hannun2014deepspeech}. However, due to the sequential nature of RNNs, the speedups of multiple GPUs are far from linear.
 
-Another way to reduce training times is through a better conditioned optimization. Standardizing or whitening of input data has long been known to improve convergence of optimization methods [?]. Extending this idea to multi-layered networks suggests that normalizing or whitening intermediate representations can similarly improve convergence. However, naively applying these transforms would be extremely costly. In [?], batch normalization was used to standardize intermediate representations by approximating the population statistics with the min-batch. Similarly, in [?], showed that by minimizing the natural gradient and calculating ?, one can go one step further and whiten intermediate representations.
+Another way to reduce training times is through a better conditioned optimization. Standardizing or whitening of input data has long been known to improve convergence of optimization methods [?]. Extending this idea to multi-layered networks suggests that normalizing or whitening intermediate representations can similarly improve convergence. However, naively applying these transforms would be extremely costly. In \citep{ioffe2015}, batch normalization was used to standardize intermediate representations by approximating the population statistics with the min-batch. Similarly, in \citep{desjardins2015natural}, showed that convergence can be improved even more by whitening intermediate representations instead of simply standardizing them.
 
 These methods reduced training times of Convolutional Neural Networks (CNNs) by an order of magnitude and additionallly provided a regularization constraint. In this paper, we explore how to leverage normalization in RNNs and show that training time can be significantly reduced.
 
@@ -117,16 +117,16 @@ Where $\tanh$ is the hyperbolic tangent function, $\boldsymbol W$ is the recurre
 	\boldsymbol y_t = softmax(\boldsymbol W * \boldsymbol h_{t-1}) \nonumber
 \end{equation}
 
-where $softmax$ provides a normalized probability distribution over the possible classes and $\boldsymbol W$ is a weight matrix. By using $\boldsymbol h$ as the input to another RNN, we can stack RNNs, creating deeper architectures [?]
+where $softmax$ provides a normalized probability distribution over the possible classes and $\boldsymbol W$ is a weight matrix. By using $\boldsymbol h$ as the input to another RNN, we can stack RNNs, creating deeper architectures \cite{pascanu2013construct}
 
 \begin{equation}
 	\boldsymbol h_t^{l} = \sigma(\boldsymbol W * \boldsymbol h_{t-1}^{l} + \boldsymbol I * \boldsymbol h_t^{l-1}) \nonumber
 \end{equation}
 
-Training vanilla RNNs is known to be particularly difficult, primarily due to the vanishing gradient problem [?].
+Training vanilla RNNs is known to be particularly difficult, primarily due to the vanishing gradient problem \cite{pascanu2012difficulty}.
 
 \subsection{Long Short-Term Memory}
-LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gating functions into their state dynamics [?]. At each time step, an LSTM maintains a hidden vector $\boldsymbol h$ and a memory vector $\boldsymbol m$  responsible for controlling state updates and outputs. More concretely, we define the computation at time step $t$ as follows [?]:
+LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gating functions into their state dynamics \citep{hochreiter1997long}. At each time step, an LSTM maintains a hidden vector $\boldsymbol h$ and a memory vector $\boldsymbol m$  responsible for controlling state updates and outputs. More concretely, we define the computation at time step $t$ as follows \cite{kalchbrenner2015grid}:
 
 \begin{equation}
 	\begin{split}
@@ -183,7 +183,7 @@ As a note of caution, one must take care not to normalize across the time inform
 \section{Experiments}
 
 \subsection{Language Modeling}
-We used the Penn Treebank (PTB) [?] corpus for our language modeling experiments. We use the standard split (929k training words, 73k validation words, and 82k test words) and vocabulary of 10k words. We train a small LSTM and a Large LSTM as described in [?].
+We used the Penn Treebank (PTB) \citep{marcus1993building} corpus for our language modeling experiments. We use the standard split (929k training words, 73k validation words, and 82k test words) and vocabulary of 10k words. We train a small LSTM and a Large LSTM as described in \citep{zaremba2014recurrent}.
 
 Both models consist of two stacked LSTM layers and are trained with stochastic gradient descent with a learning rate of 1 and a mini-batch size of 20.
 
