@@ -38,10 +38,6 @@ optimizer = SGD(learning_rate, grad, decay)
 
 
 if __name__ == '__main__':
-    # compile
     model.compile(dataset, optimizer)
-    model.compile(dataset)
-
-    # train
     model.train(epochs)
     model.dump('ptb_small_ref_results.pkl')
