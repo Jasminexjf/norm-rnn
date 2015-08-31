@@ -39,6 +39,13 @@ optimizer = SGD(learning_rate, grad, decay)
 
 if __name__ == '__main__':
     model.compile(dataset, optimizer)
+
+    dataset.batch_size = 2
+
     model.compile(dataset)
+
+    model.batch_size = batch_size
+    model.val_batch_size = 2
+
     model.train(epochs)
     model.dump('ptb_small_ref_results.pkl')

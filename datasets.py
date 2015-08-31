@@ -132,7 +132,7 @@ class PennTreebank():
         test_data = load_data("data/ptb.test.txt.gz", self.vocab_map, self.vocab_idx)
 
         X_train, y_train = reorder(train_data, batch_size, time_steps)
-        X_valid, y_valid = reorder(valid_data, batch_size, time_steps)
+        X_valid, y_valid = reorder(valid_data, 2, time_steps)
         X_test, y_test = reorder(test_data, batch_size, time_steps)
 
         self.X_train = theano.shared(X_train)
