@@ -94,9 +94,16 @@ def plot_saved_perplexity(file_names, model_names, save_file_name):
 
     # x and y labels
     layout = Layout(xaxis=XAxis(title='Epochs'),
-                    yaxis=YAxis(title='Perplexity'))
+                    yaxis=YAxis(title='Perplexity'),
+                    showlegend=True,
+                    legend=Legend(x=0.6, y=1))
 
     # save plot and open in browser
     fig = Figure(data=Data(data), layout=layout)
     py.image.save_as(fig, '{}.png'.format(save_file_name))
     print py.plot(data, filename='basic-line')
+
+
+#plot_saved_perplexity(['test1.pkl', 'test2.pkl'],
+#                      ['With Batch Normalization', 'Without Batch Normalization'],
+#                      'results')
