@@ -191,8 +191,8 @@ class LSTM(object):
 
     def set_state(self, batch_size, time_steps=None):
         if self.shared_state:
-            self.h.set_value(self.h.get_value * 0)
-            self.c.set_value(self.c.get_value * 0)
+            self.h.set_value(self.h.get_value() * 0.)
+            self.c.set_value(self.c.get_value() * 0.)
         else:
             self.h = theano.shared(np.zeros((batch_size, self.layer_size), dtype=theano.config.floatX))
             self.c = theano.shared(np.zeros((batch_size, self.layer_size), dtype=theano.config.floatX))
