@@ -18,7 +18,7 @@ learning_rate = 1
 decay_rate = 0.5
 decay_epoch = 4
 max_norm = 5
-epochs = 15
+epochs = 5
 
 # data
 dataset = PennTreebank(batch_size, time_steps)
