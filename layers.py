@@ -190,10 +190,13 @@ class LSTM(object):
         return T.alloc(np.cast[theano.config.floatX](0.), *dims)
 
     def set_state(self, batch_size, time_steps=None):
-        # make hidden and cells a shared variable so that state is persistent
-        self.h = theano.shared(np.zeros((batch_size, self.layer_size), dtype=theano.config.floatX))
-        self.c = theano.shared(np.zeros((batch_size, self.layer_size), dtype=theano.config.floatX))
-        self.shared_state = True
+        if self.shared_state:
+            self.h.set_value(self.h.get_value * 0)
+            self.c.set_value(self.c.get_value * 0)
+        else:
+            self.h = theano.shared(np.zeros((batch_size, self.layer_size), dtype=theano.config.floatX))
+            self.c = theano.shared(np.zeros((batch_size, self.layer_size), dtype=theano.config.floatX))
+            self.shared_state = True
 
 
 class BNLSTM(LSTM):
