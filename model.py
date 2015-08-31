@@ -32,7 +32,7 @@ class List(object):
             x = layer(x)
         return x
 
-    def compile(self, dataset, optimizer):
+    def compile(self, dataset, optimizer=None):
         self.reset_state(dataset.batch_size, dataset.time_steps)
         self.batch_size = dataset.batch_size
         self.time_steps = dataset.time_steps
@@ -43,6 +43,9 @@ class List(object):
         i = T.iscalar()
 
         # prediction
+        if optimizer is None:
+            self.mode(train=False)
+
         p = self(x)
 
         # compute metrics
@@ -57,24 +60,22 @@ class List(object):
             if isinstance(layer, LSTM):
                 updates.extend(layer.updates)
 
-        # compile fit
-        givens = {x: dataset.X_train[i * dataset.batch_size:(i+1) * dataset.batch_size],
-                  y: dataset.y_train[i * dataset.batch_size:(i+1) * dataset.batch_size]}
+        if optimizer is None:
+            givens = {x: dataset.X_valid[i * dataset.batch_size:(i+1) * dataset.batch_size],
+                      y: dataset.y_valid[i * dataset.batch_size:(i+1) * dataset.batch_size]}
 
-        # link to pentree.py
-        scaled_cost = cost * dataset.time_steps
-        grads = [T.grad(scaled_cost, param) for param in self.params]
-        updates.extend(optimizer(self.params, grads))
-        self.fit = theano.function([i], (perplexity, accuracy), None, updates, givens)
-        self.fit_batches = len(dataset.X_train.get_value()) / dataset.batch_size
+            self.val = theano.function([i], (perplexity, accuracy), None, updates, givens)
+            self.val_batches = len(dataset.X_valid.get_value()) / dataset.batch_size
+        else:
+            givens = {x: dataset.X_train[i * dataset.batch_size:(i+1) * dataset.batch_size],
+                      y: dataset.y_train[i * dataset.batch_size:(i+1) * dataset.batch_size]}
 
-        # compile val
-        self.mode(train=False)
-        givens = {x: dataset.X_valid[i * dataset.batch_size:(i+1) * dataset.batch_size],
-                  y: dataset.y_valid[i * dataset.batch_size:(i+1) * dataset.batch_size]}
-
-        self.val = theano.function([i], (perplexity, accuracy), None, updates, givens)
-        self.val_batches = len(dataset.X_valid.get_value()) / dataset.batch_size
+            # link to pentree.py
+            scaled_cost = cost * dataset.time_steps
+            grads = [T.grad(scaled_cost, param) for param in self.params]
+            updates.extend(optimizer(self.params, grads))
+            self.fit = theano.function([i], (perplexity, accuracy), None, updates, givens)
+            self.fit_batches = len(dataset.X_train.get_value()) / dataset.batch_size
 
     def train(self, epochs):
         for epoch in range(1, epochs + 1):

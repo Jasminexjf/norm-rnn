@@ -13,5 +13,6 @@ model = List([
 
 if __name__ == '__main__':
     model.compile(dataset, optimizer)
+    model.compile(dataset)
     model.train(epochs)
     model.dump('ptb_small_norm_results.pkl')
