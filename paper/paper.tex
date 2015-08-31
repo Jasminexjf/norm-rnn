@@ -53,12 +53,15 @@ Yoshua Bengio$^\ast{}^1$}
 \maketitle
 %
 \begin{abstract}
-Training Recurrent Neural Networks (RNNs) is often times prohibitively expensive, particularly 
-for deep architectures. Batch normalization, a method for normalizing intermediate 
-representations of neural networks using batch statistics, has proven to significantly reduce 
-training times of very deep convolutional neural networks. Here, we show how to apply batch
-normalization to RNNs, which leads to faster convergence.
-
+Recurrent Neural Networks (RNNs) are expressive models that are able to learn
+long term dependencies in sequential data. However, they are computationally
+expensive to train and difficult to parallelize. Recent work has shown that normalizing
+intermediate representations of neural networks can significantly improve convergence
+rates in convolutional neural networks (CNNs). In particular, batch normalization, which
+uses mini-batch statistics to standardize features, was shown to reduce training times by
+an order of magnitude. In this paper,
+we extend batch normalization to RNNs for both speech recognition and language
+modeling, leading to significantly faster convergence.
 \end{abstract}
 %
 \begin{keywords}
@@ -69,7 +72,7 @@ batch normalization, RNN, optimization, speech recognition, language model
 
 Recurrent Neural Networks (RNNs) have received renewed interest due to their recent successes across a number of domains. In speech recognition, RNNs are able to learn mappings from speech to text, matching state of the art without the need for an alignment model \citep{graves2013speech}. In machine translation, encoder-decoder, or sequence-to-sequence models, are able map arbitrary length sequences of one language to another, learning the alignment on the fly \citep{sutskever2014sequence}. For language models, RNNs have recent been shown to learn expressive semantic embeddings and the ability to model long term grammatical dependencies, such as opening and closing parenthesis \citep{mikolov2012thesis}.
 
-Despite the expressiveness of these models, the training cost for large datasets and deep architectures of stacked RNNs can be prohibitively expensive, often times an order of magnitude greater than other models \citep{williams2015scaling}. Because of this, recent work has explored methods for parallelizing RNNs across multiple GPUs. One approach is to distribute deep RNNs layer-wise. \citep{sutskever2014sequence}. Alternatively,  a RNN was distributed across time, with the forward and backward pass of a Bi-Directional RNN layer being split in half \citep{hannun2014deepspeech}. However, due to the sequential nature of RNNs, the speedups of multiple GPUs are far from linear.
+Despite the expressiveness of these models, the training cost for large datasets and deep architectures of stacked RNNs can be prohibitively expensive, often times an order of magnitude greater than other models \citep{williams2015scaling}. Because of this, recent work has explored methods for parallelizing RNNs across multiple graphics cards (GPUs). In \citep{sutskever2014sequence}, an LSTM was distributed layer-wise across multiple gpus and in \citep{hannun2014deepspeech} a Bi-Directional RNN was distributed across time. However, due to the sequential nature of RNNs, it is difficult to achieve linear speed ups relative to the number of GPUs.
 
 Another way to reduce training times is through a better conditioned optimization. Standardizing or whitening of input data has long been known to improve convergence of optimization methods [?]. Extending this idea to multi-layered networks suggests that normalizing or whitening intermediate representations can similarly improve convergence. However, naively applying these transforms would be extremely costly. In \citep{ioffe2015}, batch normalization was used to standardize intermediate representations by approximating the population statistics with the min-batch. Similarly, in \citep{desjardins2015natural}, showed that convergence can be improved even more by whitening intermediate representations instead of simply standardizing them.
 
@@ -77,27 +80,27 @@ These methods reduced training times of Convolutional Neural Networks (CNNs) by 
 
 \section{Batch Normalization}
 
-In optimization, standardization or whitening is a common procedure proven to reduce asymptotic convergence rates. By better conditioning the optimization procedure, algorithms like gradient descent are able to take better steps in the direction of the minimum. Extending the idea to deep neural networks, one can think of an arbitrary layer as receiving an input distribution from the previous layer. Normally, this distribution changes every update, making layer responsible, not only for learning a good representation but for adapting to a changing distribution as well. The changing distribution of the intermediate distributions of a network is termed covariate drift and reducing this drift is hypothesized to be the reason why batch normalization significantly reduces training times.
+In optimization, standardization or whitening is a common procedure proven to reduce convergence rates. Extending the idea to deep neural networks, one can think of an arbitrary layer as receiving an input distribution from the previous layer. Normally, this distribution changes every update, making layer responsible, not only for learning a good representation but for adapting to a changing distribution as well. The changing distribution of the intermediate distributions of a network is termed covariate drift and reducing this drift is hypothesized to be the reason why batch normalization significantly reduces training times \citep{ioffe2015}.
 
 Since, calculating population statistics over a large dataset after every update is infeasible, batch normalization approximates them with sample statistics drawn from a mini-batch. Given a batch of samples $\x_1, \dots \x_n$, we can calculate the sample mean and sample standard deviation as
 
 \begin{equation}
 	\begin{split}
-		& \bar \x = \frac{1}{n} \sum_i^n \x_i \\
-		& \boldsymbol{\sigma} = \frac{1}{n} = \sum (\x_i - \hat \x)
+		& \bar \x = \frac{1}{n} \sum_i^n \x_i, \\
+		& \mathbf{\sigma} = \frac{1}{n} = \sum (\x_i - \hat \x).
 	\end{split}
 \end{equation}
 
-and using these statistics, we can standardize the data as follows
+Using these statistics, we can standardize the data as follows
 
 \begin{equation}
-	\hat \x = \frac{\x - \bar \x}{\boldsymbol \sigma}
+	\hat \x = \frac{\x - \bar \x}{\mathbf \sigma}.
 \end{equation}
 
-However, by simply standardizing the intermediate representation, the representational power of the layer is changed. To account for this, batch normalization introduces additional learnable parameters $\gamma$ and $\beta$, which respectively scale and shift the data, leading to a layer of the form
+However, by simply standardizing the intermediate representation, the representational capacity of the layer is changed. To account for this, batch normalization introduces additional learnable parameters $\gamma$ and $\beta$, which respectively scale and shift the data, leading to a layer of the form
 
 \begin{equation}
-	BN(x) = \gamma \hat \x + \beta
+	BN(x) = \gamma \hat \x + \beta.
 \end{equation}
 
 By setting $\gamma$ to the standard deviation and $\beta$ to the expectation, we can recover the original layer representation.
@@ -105,41 +108,41 @@ By setting $\gamma$ to the standard deviation and $\beta$ to the expectation, we
 At test time, we can calculate mean and sigma in a number of ways. The simplest is to use a validation batch as was done during training. Alternatively, population statistics can be calculated at the end of training or during training by maintaining a running average calculated over each mini-batch seen during training.
 
 \section{Recurrent Neural Networks}
-RNNs maintain a hidden vector $\boldsymbol h$, which is updated at time step $t$ as follows:
+RNNs maintain a hidden vector $\mathbf h$, which is updated at time step $t$ as follows:
  
 \begin{equation}
-	\boldsymbol h_t = \tanh(\boldsymbol W * \boldsymbol h_{t-1} + \boldsymbol I * \x_t) \nonumber
+	\mathbf h_t = \tanh(\mathbf W * \mathbf h_{t-1} + \mathbf I * \x_t)
 \end{equation}
 
-Where $\tanh$ is the hyperbolic tangent function, $\boldsymbol W$ is the recurrent weight matrix and $I$ is a projection matrix. The hidden state $\boldsymbol h$ is then used at each time step in the case of language modeling or at the end of the sequence to make a prediction $\boldsymbol y$
+where $\tanh$ is the hyperbolic tangent function, $\mathbf W$ is the recurrent weight matrix and $I$ is a projection matrix. The hidden state $\mathbf h$ is then used to make a prediction
 
 \begin{equation}
-	\boldsymbol y_t = softmax(\boldsymbol W * \boldsymbol h_{t-1}) \nonumber
+	\mathbf y_t = \text{softmax}(\mathbf W * \mathbf h_{t-1})
 \end{equation}
 
-where $softmax$ provides a normalized probability distribution over the possible classes and $\boldsymbol W$ is a weight matrix. By using $\boldsymbol h$ as the input to another RNN, we can stack RNNs, creating deeper architectures \cite{pascanu2013construct}
+where $\textit{softmax}$ provides a normalized probability distribution over the possible classes and $\mathbf W$ is a weight matrix. By using $\mathbf h$ as the input to another RNN, we can stack RNNs, creating deeper architectures \citep{pascanu2013construct}
 
 \begin{equation}
-	\boldsymbol h_t^{l} = \sigma(\boldsymbol W * \boldsymbol h_{t-1}^{l} + \boldsymbol I * \boldsymbol h_t^{l-1}) \nonumber
+	\mathbf h_t^{l} = \sigma(\mathbf W * \mathbf h_{t-1}^{l} + \mathbf I * \mathbf h_t^{l-1}).
 \end{equation}
 
-Training vanilla RNNs is known to be particularly difficult, primarily due to the vanishing gradient problem \cite{pascanu2012difficulty}.
+Training vanilla RNNs is known to be particularly difficult, with vanishing and exploding gradients being one possible explanation \cite{pascanu2012difficulty}.
 
 \subsection{Long Short-Term Memory}
-LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gating functions into their state dynamics \citep{hochreiter1997long}. At each time step, an LSTM maintains a hidden vector $\boldsymbol h$ and a memory vector $\boldsymbol m$  responsible for controlling state updates and outputs. More concretely, we define the computation at time step $t$ as follows \cite{kalchbrenner2015grid}:
+LSTMs address the vanishing gradient problem commonly found in RNNs by incorporating gating functions into their state dynamics \citep{hochreiter1997long}. At each time step, an LSTM maintains a hidden vector $\mathbf h$ and a memory vector $\mathbf m$  responsible for controlling state updates and outputs. More concretely, we define the computation at time step $t$ as follows \cite{kalchbrenner2015grid}:
 
 \begin{equation}
 	\begin{split}
-		& \boldsymbol g^u = \sigma(\boldsymbol W^u * \boldsymbol h_{t-1} + \boldsymbol I^u * \x_t) \\
-		& \boldsymbol g^f = \sigma(\boldsymbol W^f * \boldsymbol h_{t-1} + \boldsymbol I^f * \x_t) \\
-		& \boldsymbol g^o = \sigma(\boldsymbol W^o * \boldsymbol h_{t-1} + \boldsymbol I^o * \x_t) \\
-		& \boldsymbol g^c = \tanh(\boldsymbol W^c * \boldsymbol h_{t-1} + \boldsymbol I^c * \x_t) \\
-		& \boldsymbol m_t = \boldsymbol g^f \odot \boldsymbol +  \boldsymbol g^u \odot \boldsymbol g^c \\
-		& \boldsymbol h_t = \tanh(\boldsymbol g^o \odot \boldsymbol m_{t-1}) \nonumber
+		& \mathbf g^u = \sigma(\mathbf W^u * \mathbf h_{t-1} + \mathbf I^u * \x_t) \\
+		& \mathbf g^f = \sigma(\mathbf W^f * \mathbf h_{t-1} + \mathbf I^f * \x_t) \\
+		& \mathbf g^o = \sigma(\mathbf W^o * \mathbf h_{t-1} + \mathbf I^o * \x_t) \\
+		& \mathbf g^c = \tanh(\mathbf W^c * \mathbf h_{t-1} + \mathbf I^c * \x_t) \\
+		& \mathbf m_t = \mathbf g^f \odot \mathbf +  \mathbf g^u \odot \mathbf g^c \\
+		& \mathbf h_t = \tanh(\mathbf g^o \odot \mathbf m_{t-1}) 
 	\end{split}
 \end{equation}
 
-Where $\sigma$ is the logistic sigmoid function, $\boldsymbol W^u, \boldsymbol W^f, \boldsymbol W^o, \boldsymbol W^c$ are recurrent weight matrices and $\boldsymbol I^u, \boldsymbol I^f, \boldsymbol I^o, \boldsymbol I^c$ is are projection matrices.
+here $\sigma$ is the logistic sigmoid function, $\mathbf W^u, \mathbf W^f, \mathbf W^o, \mathbf W^c$ are recurrent weight matrices and $\mathbf I^u, \mathbf I^f, \mathbf I^o, \mathbf I^c$ are projection matrices.
 
 \section{Normalization}
 
@@ -148,21 +151,21 @@ The more complicated state transition of LSTMs as compared to CNNs allows for a 
 \subsection{Projection Normalization} The simplest method for normalizing LSTMs is applying batch normalization only on the input to hidden transition, as these are independent of previous hidden states. Generalizing the gate equations given above, we can express this form as
 
 \begin{equation}
-	\boldsymbol g = \sigma(\boldsymbol W * \boldsymbol h + BN(\boldsymbol I * \x)) \\
+	\mathbf g = \sigma(\mathbf W * \mathbf h + BN(\mathbf I * \x)) \\
 \end{equation}
  
-Where batch normalization is applied after the input projection $\boldsymbol I$ and then summed with the new hidden state $\boldsymbol h$ before applying the gate non-linearity.
+where batch normalization is applied after the input projection $\mathbf I$ and then summed with the new hidden state $\mathbf h$ before applying the gate non-linearity.
 
-\subsection{State Normalization} Similarly, we can normalize only the the hidden state transitions by applying batch normalization after applying the recurrent weight matrix $\boldsymbol W$ to the previous hidden state $\boldsymbol h_{t-1}$
+\subsection{State Normalization} Similarly, we can normalize only the the hidden state transitions by applying batch normalization after applying the recurrent weight matrix $\mathbf W$ to the previous hidden state $\mathbf h_{t-1}$
 
 \begin{equation}
-	\boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h_{t-1}) + \boldsymbol I * \x) \\
+	\mathbf g = \sigma(BN(\mathbf W * \mathbf h_{t-1}) + \mathbf I * \x). \\
 \end{equation} 
 
 \subsection{Gate Normalization} Combining the two methods above, we can normalize all the gates, leading to 
 
 \begin{equation}
-	\boldsymbol g = \sigma(BN(\boldsymbol W * \boldsymbol h + \boldsymbol I * \x)) \nonumber
+	\mathbf g = \sigma(BN(\mathbf W * \mathbf h + \mathbf I * \x)).
 \end{equation}
 
 \subsection{Temporal Normalization}
@@ -170,15 +173,12 @@ We can extend batch normalization to sequences by calculating a reduction across
 
 \begin{equation}
 	\begin{split}
-		& \hat \x_t = \frac{\boldsymbol x - \frac{1}{t} \sum \x_t}{\sqrt{Var(\x_t)}} \\
-		& TN(\x) = \gamma \hat \x_t + \beta
+		& \hat \x_t = \frac{\mathbf x - \frac{1}{t} \sum \x_t}{\sqrt{Var(\x_t)}}, \\
+		& TN(\x) = \gamma \hat \x_t + \beta.
 	\end{split}
 \end{equation}
 
 As a note of caution, one must take care not to normalize across the time information in tasks where this leads to using future statistics to make past predictions. For example, RNN language models usually predict the next token at each time step. If time normalization is used in this case, the model learns to use future time steps to make predictions about the next token, which equates to using labeled data to make predictions.
-
-\subsection{Adaptive Learning Rates} One challenge of normalizing RNNs is that by normalizing individual components, we change the learning dynamics of that component in relation to the others. In their experiments, [?] noted that batch normalization allows for much higher learning rates. However, in the case where we normalized the input projection and optimize with stochastic gradient descent, a higher learning rate leads to vanishing gradients because negatively effects the recurrent weight updates. To address this, we can use a different learning rate for these transition or employ an optimizer with adaptive learning rates, such as RMSprop.
-
 
 \section{Experiments}
 
@@ -187,9 +187,9 @@ We used the Penn Treebank (PTB) \citep{marcus1993building} corpus for our langua
 
 Both models consist of two stacked LSTM layers and are trained with stochastic gradient descent with a learning rate of 1 and a mini-batch size of 20.
 
-The small LSTM has a hidden size of 200 for both layers, initialized uniformly in the range [-0.1, 0.1]. We back propagate across 20 time steps and gradients are scaled according to the maximum norm of the gradients whenever the norm is greater than 10 [?]. We train for 15 epochs and halve the learning rate every epoch after the 6th.  
+The small LSTM has a hidden size of 200 for both layers, with parameters being initialized from a uniform distribution with range  [-0.1, 0.1]. We back propagate across 20 time steps and gradients are scaled according to the maximum norm of the gradients whenever the norm is greater than 10. We train for 15 epochs and halve the learning rate every epoch after the 6th.  
 
-The Large LSTM has a hidden size of 1500 for both layers, initialized uniformly in the range [-0.04, 0.04]. We apply dropout between all layers. We back propagate across 35 time steps and gradients are scaled according to the maximum norm of the gradients whenever the norm is greater than 5 [?]. We train for 55 epochs and divide the learning rate by 1.15 every epoch after the 15th.
+The Large LSTM has a hidden size of 1500 for both layers, with parameters being initialized from a uniform distribution with range [-0.04, 0.04]. We apply dropout between all layers. We back propagate across 35 time steps and gradients are scaled according to the maximum norm of the gradients whenever the norm is greater than 5. We train for 55 epochs and divide the learning rate by 1.15 every epoch after the 15th.
 
 \begin{figure}[t]
   \centering
@@ -239,9 +239,9 @@ The Large LSTM has a hidden size of 1500 for both layers, initialized uniformly 
 % BiBTeX files (here: strings, refs, manuals). The IEEEbib.bst bibliography
 % style file from IEEE produces unsorted bibliography list.
 % -------------------------------------------------------------------------
-%\bibliographystyle{IEEEbib}
+\bibliographystyle{IEEEbib}
 
-\bibliographystyle{natbib}
+%\bibliographystyle{natbib}
 \bibliography{paperrefs}
 
 \end{document}
