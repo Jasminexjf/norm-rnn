@@ -57,13 +57,6 @@ class List(object):
             if isinstance(layer, LSTM):
                 updates.extend(layer.updates)
 
-        # compile val
-        givens = {x: dataset.X_valid[i * dataset.batch_size:(i+1) * dataset.batch_size],
-                  y: dataset.y_valid[i * dataset.batch_size:(i+1) * dataset.batch_size]}
-
-        self.val = theano.function([i], (perplexity, accuracy), None, updates, givens)
-        self.val_batches = len(dataset.X_valid.get_value()) / dataset.batch_size
-
         # compile fit
         givens = {x: dataset.X_train[i * dataset.batch_size:(i+1) * dataset.batch_size],
                   y: dataset.y_train[i * dataset.batch_size:(i+1) * dataset.batch_size]}
@@ -74,6 +67,14 @@ class List(object):
         updates.extend(optimizer(self.params, grads))
         self.fit = theano.function([i], (perplexity, accuracy), None, updates, givens)
         self.fit_batches = len(dataset.X_train.get_value()) / dataset.batch_size
+
+        # compile val
+        self.mode(train=False)
+        givens = {x: dataset.X_valid[i * dataset.batch_size:(i+1) * dataset.batch_size],
+                  y: dataset.y_valid[i * dataset.batch_size:(i+1) * dataset.batch_size]}
+
+        self.val = theano.function([i], (perplexity, accuracy), None, updates, givens)
+        self.val_batches = len(dataset.X_valid.get_value()) / dataset.batch_size
 
     def train(self, epochs):
         for epoch in range(1, epochs + 1):
