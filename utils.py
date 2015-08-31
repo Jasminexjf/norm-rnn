@@ -59,18 +59,44 @@ class TrainProgressBar(object):
 
 
 import cPickle
+import plotly.plotly as py
+from plotly.graph_objs import *
 
 
-def plot_saved_perplexity(file_names):
-    for file_name in file_names:
+def plot_saved_perplexity(file_names, model_names, save_file_name):
+    data = []
+    colors = ['rgb(44, 160, 44)',
+              'rgb(214, 39, 40)']
+
+    for file_name, model_name in zip(file_names, model_names):
         with open(file_name) as save_file:
             fit_results, val_results = cPickle.load(save_file)
             fit_perplexity, fit_accuracy = zip(*fit_results)
             val_perplexity, val_accuracy = zip(*val_results)
 
-            print '{} (Train)'.format(file_name)
-            for p in fit_perplexity:
-                print p
-            print '{} (Valid)'.format(file_name)
-            for p in val_perplexity:
-                print p
+            color = colors.pop()
+
+            # plot train results
+            train_trace = Scatter(x=range(len(fit_perplexity)),
+                             y=fit_perplexity,
+                             name='{} (Train)'.format(model_name),
+                             line=Line(color=color, width=1))
+
+            # plot valid results
+            valid_trace = Scatter(x=range(len(val_perplexity)),
+                             y=val_perplexity,
+                             name='{} (Valid)'.format(model_name),
+                             line=Line(color=color, width=1, dash='dot'))
+
+            # collect traces
+            data.append(train_trace)
+            data.append(valid_trace)
+
+    # x and y labels
+    layout = Layout(xaxis=XAxis(title='Epochs'),
+                    yaxis=YAxis(title='Perplexity'))
+
+    # save plot and open in browser
+    fig = Figure(data=Data(data), layout=layout)
+    py.image.save_as(fig, '{}.png'.format(save_file_name))
+    print py.plot(data, filename='basic-line')
