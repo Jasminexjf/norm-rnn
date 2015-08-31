@@ -18,4 +18,4 @@ if __name__ == '__main__':
 
     # train
     model.train(epochs)
-    model.dump('ptb_small_ref_results.pkl')
+    model.dump('ptb_small_norm_results.pkl')
