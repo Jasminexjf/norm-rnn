@@ -1,5 +1,5 @@
 from ptb_small_ref import (vocab_size, layer_size,
-                           optimizer, dataset, epochs)
+                           optimizer, train_set, valid_set, test_set, epochs)
 from model import List
 from layers import *
 
