@@ -1,27 +1,29 @@
-import gzip
-import numpy as np
+from datasets import *
+
+# data
+train_set = Text(ptb_train_path, 10, 10)
+valid_set = Text(ptb_valid_path, 10, 10, train_set.vocab_map, train_set.vocab_idx)
+test_set = Text(ptb_test_path, 10, 10, train_set.vocab_map, train_set.vocab_idx)
+
+# check vocab size
+vocab_size = 10000
+assert len(train_set.vocab_map) == vocab_size
+assert len(valid_set.vocab_map) == vocab_size
+assert len(test_set.vocab_map) == vocab_size
+
+# first 10 words of each split
+desired_train = 'aer banknote berlitz calloway centrust cluett fromstein gitano guterman hydro-quebec'
+desired_valid = 'consumers may want to move their telephones a little closer'
+desired_test = 'no it was n\'t black monday <eos> but while the'
+
+# check first 10 words loaded
+reverse_vocab_map = {i: v for v, i in train_set.vocab_map.iteritems()}
+actual_train = [reverse_vocab_map[i] for i in train_set.X[0][:10]]
+actual_valid = [reverse_vocab_map[i] for i in valid_set.X[0][:10]]
+actual_test = [reverse_vocab_map[i] for i in test_set.X[0][:10]]
+
+assert ' '.join(actual_train) == desired_train
+assert ' '.join(actual_valid) == desired_valid
+assert ' '.join(actual_test) == desired_test
 
 
-def test_penn_treebank():
-    from datasets import PennTreebank
-    ptb = PennTreebank(path='../data/ptb.train.txt')
-
-    print ptb.X[0][0]
-
-
-def split_hutter_prize():
-    with open('enwik8') as text_file:
-        text = text_file.read()
-
-    valid_start = int(0.9 * len(text))
-    valid_end = int(0.94 * len(text))
-
-    train = text[:valid_start]
-    valid = text[valid_start:valid_end]
-    test = text[valid_end:]
-
-    for split_name, data in zip(['train', 'valid', 'test'],
-                                [train, valid, test]):
-        print len(data)
-        with open('enwik8_{}'.format(split_name), 'w') as text_file:
-            text_file.write(data)

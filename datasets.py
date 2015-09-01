@@ -3,6 +3,11 @@ import theano
 import numpy as np
 
 
+ptb_train_path = 'data/ptb.train.txt.gz'
+ptb_valid_path = 'data/ptb.valid.txt.gz'
+ptb_test_path = 'data/ptb.test.txt.gz'
+
+
 # lasagne
 def load_data(file_name, vocab_map, vocab_idx):
     """
@@ -102,59 +107,20 @@ def reorder(x_in, batch_size, model_seq_len):
     return x_out.astype('int32'), targets.astype('int32')
 
 
-# lasagne
-def traindata(model_seq_len, batch_size, vocab_map, vocab_idx):
-    x = load_data("ptb.train.txt.gz", vocab_map, vocab_idx)
-    return reorder(x, batch_size, model_seq_len)
+class Text(object):
 
+    def __init__(self, path, batch_size, time_steps, vocab_map=None, vocab_index=None):
+        if vocab_map is None:
+            self.vocab_map = {}
+        else:
+            self.vocab_map = vocab_map
 
-# lasagne
-def validdata(model_seq_len, batch_size, vocab_map, vocab_idx):
-    x = load_data("ptb.valid.txt.gz", vocab_map, vocab_idx)
-    return reorder(x, batch_size, model_seq_len)
-
-
-# lasagne
-def testdata(model_seq_len, batch_size, vocab_map, vocab_idx):
-    x = load_data("ptb.test.txt.gz", vocab_map, vocab_idx)
-    return reorder(x, batch_size, model_seq_len)
-
-
-# lasagne
-class PennTreebank():
-
-    def __init__(self, batch_size, time_steps):
-        self.vocab_map = {}
-        self.vocab_idx = [0]
-
-        train_data = load_data("data/ptb.train.txt.gz", self.vocab_map, self.vocab_idx)
-        valid_data = load_data("data/ptb.valid.txt.gz", self.vocab_map, self.vocab_idx)
-        test_data = load_data("data/ptb.test.txt.gz", self.vocab_map, self.vocab_idx)
-
-        X_train, y_train = reorder(train_data, batch_size, time_steps)
-        X_valid, y_valid = reorder(valid_data, 2, time_steps)
-        X_test, y_test = reorder(test_data, batch_size, time_steps)
-
-        self.X_train = theano.shared(X_train)
-        self.X_valid = theano.shared(X_valid)
-
-        self.y_train = theano.shared(y_train)
-        self.y_valid = theano.shared(y_valid)
+        if vocab_index is None:
+            self.vocab_idx = [0]
+        else:
+            self.vocab_idx = vocab_index
 
         self.batch_size = batch_size
         self.time_steps = time_steps
-
-
-class HutterPrize():
-
-    def __init__(self, batch_size, time_steps):
-        self.vocab_map = {}
-        self.vocab_idx = [0]
-
-        train_data = load_data("enwik8_train", self.vocab_map, self.vocab_idx)
-        valid_data = load_data("enwik8_valid", self.vocab_map, self.vocab_idx)
-        test_data = load_data("enwik8_test", self.vocab_map, self.vocab_idx)
-
-        self.X_train, self.y_train = reorder(train_data, batch_size, time_steps)
-        self.X_valid, self.y_valid = reorder(valid_data, batch_size, time_steps)
-        self.X_test, self.y_test = reorder(test_data, batch_size, time_steps)
+        data = load_data(path, self.vocab_map, self.vocab_idx)
+        self.X, self.y = reorder(data, batch_size, time_steps)
