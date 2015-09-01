@@ -1,5 +1,4 @@
 import gzip
-import theano
 import numpy as np
 
 
