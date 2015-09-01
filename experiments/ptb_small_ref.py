@@ -22,7 +22,9 @@ epochs = 5
 
 # data
 train_set = Text(ptb_train_path, batch_size, time_steps)
-valid_set = Text(ptb_valid_path, 2, time_steps,
+valid_set = Text(ptb_valid_path, batch_size, time_steps,
+                 vocab_map=train_set.vocab_map, vocab_index=train_set.vocab_idx)
+test_set = Text(ptb_valid_path, batch_size, time_steps,
                  vocab_map=train_set.vocab_map, vocab_index=train_set.vocab_idx)
 vocab_size = len(train_set.vocab_map)
 
@@ -40,5 +42,5 @@ optimizer = SGD(learning_rate, grad, decay)
 
 
 if __name__ == '__main__':
-    model.train(train_set, valid_set, optimizer, epochs)
+    model.train(train_set, valid_set, test_set, optimizer, epochs)
     model.dump('ptb_small_ref_results.pkl')

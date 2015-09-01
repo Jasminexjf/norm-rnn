@@ -72,7 +72,7 @@ class List(object):
             updates.extend(optimizer(self.params, grads))
             return theano.function([i], (perplexity, accuracy), None, updates, givens)
 
-    def train(self, train_set, valid_set, optimizer, epochs):
+    def train(self, train_set, valid_set, test_set, optimizer, epochs):
         fit = self.compile(train_set, optimizer)
 
         from layers import LSTM
@@ -88,12 +88,6 @@ class List(object):
             if isinstance(layer, LSTM):
                 val_state.append(layer.h)
                 val_state.append(layer.c)
-
-        for state in fit_state:
-            print state.get_value().shape
-
-        for state in val_state:
-            print state.get_value().shape
 
         for epoch in range(1, epochs + 1):
             progress_bar = TrainProgressBar(epoch, train_set.batches, valid_set.batches)
@@ -121,6 +115,15 @@ class List(object):
             self.fit_results.extend(fit_results)
             self.val_results.extend(val_results)
             print
+
+        # test
+        test = self.compile(test_set)
+        test_results = []
+        for batch in range(test_set.batches):
+            test_results.append(test(batch))
+        import numpy as np
+        test_perplexity, test_accuracy = zip(*test_results)
+        print 'pp({}), acc({})'.format(np.mean(test_perplexity), np.mean(test_accuracy))
 
     def dump(self, file_name):
         import cPickle
