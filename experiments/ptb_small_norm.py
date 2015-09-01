@@ -12,7 +12,5 @@ model = List([
 
 
 if __name__ == '__main__':
-    model.compile(dataset, optimizer)
-    model.compile(dataset)
-    model.train(epochs)
+    model.train(train_set, valid_set, test_set, optimizer, epochs)
     model.dump('ptb_small_norm_results.pkl')
