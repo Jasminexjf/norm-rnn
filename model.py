@@ -74,7 +74,26 @@ class List(object):
 
     def train(self, train_set, valid_set, optimizer, epochs):
         fit = self.compile(train_set, optimizer)
+
+        from layers import LSTM
+        fit_state = []
+        for layer in self.layers:
+            if isinstance(layer, LSTM):
+                fit_state.append(layer.h)
+                fit_state.append(layer.c)
+
         val = self.compile(valid_set)
+        val_state = []
+        for layer in self.layers:
+            if isinstance(layer, LSTM):
+                val_state.append(layer.h)
+                val_state.append(layer.c)
+
+        for state in fit_state:
+            print state.get_value().shape
+
+        for state in val_state:
+            print state.get_value().shape
 
         for epoch in range(1, epochs + 1):
             progress_bar = TrainProgressBar(epoch, train_set.batches, valid_set.batches)
@@ -85,7 +104,9 @@ class List(object):
                 fit_results.append(fit(batch))
                 progress_bar.fit_update(fit_results)
 
-            self.reset_state(valid_set.batch_size, valid_set.time_steps)
+            # reset fit state
+            for state in fit_state:
+                state.set_value(state.get_value() * 0.)
 
             # validate
             val_results = []
@@ -93,7 +114,9 @@ class List(object):
                 val_results.append(val(batch))
                 progress_bar.val_update(val_results)
 
-            self.reset_state(train_set.batch_size, train_set.time_steps)
+            # reset val state
+            for state in val_state:
+                state.set_value(state.get_value() * 0.)
 
             self.fit_results.extend(fit_results)
             self.val_results.extend(val_results)
