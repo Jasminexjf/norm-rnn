@@ -124,3 +124,7 @@ class Text(object):
         self.time_steps = time_steps
         data = load_data(path, self.vocab_map, self.vocab_idx)
         self.X, self.y = reorder(data, batch_size, time_steps)
+
+    @property
+    def batches(self):
+        return len(self.X) / self.batch_size

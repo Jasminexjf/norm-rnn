@@ -34,8 +34,6 @@ class List(object):
 
     def compile(self, dataset, optimizer=None):
         self.reset_state(dataset.batch_size, dataset.time_steps)
-        self.batch_size = dataset.batch_size
-        self.time_steps = dataset.time_steps
 
         # symbolic variables
         x = T.imatrix()
@@ -60,42 +58,42 @@ class List(object):
             if isinstance(layer, LSTM):
                 updates.extend(layer.updates)
 
+        X = theano.shared(dataset.X)
+        Y = theano.shared(dataset.y)
+        givens = {x: X[i * dataset.batch_size:(i+1) * dataset.batch_size],
+                  y: Y[i * dataset.batch_size:(i+1) * dataset.batch_size]}
+
         if optimizer is None:
-            givens = {x: dataset.X_valid[i * dataset.batch_size:(i+1) * dataset.batch_size],
-                      y: dataset.y_valid[i * dataset.batch_size:(i+1) * dataset.batch_size]}
-
-            self.val = theano.function([i], (perplexity, accuracy), None, updates, givens)
-            self.val_batches = len(dataset.X_valid.get_value()) / dataset.batch_size
+            return theano.function([i], (perplexity, accuracy), None, updates, givens)
         else:
-            givens = {x: dataset.X_train[i * dataset.batch_size:(i+1) * dataset.batch_size],
-                      y: dataset.y_train[i * dataset.batch_size:(i+1) * dataset.batch_size]}
-
             # link to pentree.py
             scaled_cost = cost * dataset.time_steps
             grads = [T.grad(scaled_cost, param) for param in self.params]
             updates.extend(optimizer(self.params, grads))
-            self.fit = theano.function([i], (perplexity, accuracy), None, updates, givens)
-            self.fit_batches = len(dataset.X_train.get_value()) / dataset.batch_size
+            return theano.function([i], (perplexity, accuracy), None, updates, givens)
 
-    def train(self, epochs):
+    def train(self, train_set, valid_set, optimizer, epochs):
+        fit = self.compile(train_set, optimizer)
+        val = self.compile(valid_set)
+
         for epoch in range(1, epochs + 1):
-            progress_bar = TrainProgressBar(epoch, self.fit_batches, self.val_batches)
+            progress_bar = TrainProgressBar(epoch, train_set.batches, valid_set.batches)
 
             # fit
             fit_results = []
-            for batch in range(self.fit_batches):
-                fit_results.append(self.fit(batch))
+            for batch in range(train_set.batches):
+                fit_results.append(fit(batch))
                 progress_bar.fit_update(fit_results)
 
-            self.reset_state(self.batch_size, self.time_steps)
+            self.reset_state(valid_set.batch_size, valid_set.time_steps)
 
             # validate
             val_results = []
-            for batch in range(self.val_batches):
-                val_results.append(self.val(batch))
+            for batch in range(valid_set.batches):
+                val_results.append(val(batch))
                 progress_bar.val_update(val_results)
 
-            self.reset_state(self.batch_size, self.time_steps)
+            self.reset_state(train_set.batch_size, train_set.time_steps)
 
             self.fit_results.extend(fit_results)
             self.val_results.extend(val_results)
