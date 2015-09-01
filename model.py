@@ -113,7 +113,7 @@ class List(object):
                 state.set_value(state.get_value() * 0.)
 
 
-
+	    print
 
 
             # fit
