@@ -94,7 +94,7 @@ class List(object):
 
             # fit
             fit_results = []
-            for batch in range(train_set.batches):
+            for batch in range(train_set.batches / 2):
                 fit_results.append(fit(batch))
                 progress_bar.fit_update(fit_results)
 
@@ -111,6 +111,31 @@ class List(object):
             # reset val state
             for state in val_state:
                 state.set_value(state.get_value() * 0.)
+
+
+
+
+
+            # fit
+            fit_results = []
+            for batch in range(train_set.batches / 2, train_set.batches):
+                fit_results.append(fit(batch))
+                progress_bar.fit_update(fit_results)
+
+            # reset fit state
+            for state in fit_state:
+                state.set_value(state.get_value() * 0.)
+
+            # validate
+            val_results = []
+            for batch in range(valid_set.batches):
+                val_results.append(val(batch))
+                progress_bar.val_update(val_results)
+
+            # reset val state
+            for state in val_state:
+                state.set_value(state.get_value() * 0.)
+
 
             self.fit_results.extend(fit_results)
             self.val_results.extend(val_results)
