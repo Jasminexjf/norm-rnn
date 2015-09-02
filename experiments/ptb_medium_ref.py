@@ -52,4 +52,4 @@ optimizer = SGD(learning_rate, grad, decay)
 
 if __name__ == '__main__':
     model.train(train_set, valid_set, test_set, optimizer, epochs)
-    model.dump('ptb_small_ref_results.pkl')
+    model.dump('ptb_medium_ref_results.pkl')
