@@ -149,8 +149,7 @@ class List(object):
         for batch in range(test_set.batches):
             test_results.append(test(batch))
         import numpy as np
-        test_perplexity, test_accuracy = zip(*test_results)
-        print 'pp({}), acc({})'.format(np.mean(test_perplexity), np.mean(test_accuracy))
+        print 'pp({})'.format(np.mean(test_results))
 
     def dump(self, file_name):
         import cPickle
