@@ -8,7 +8,7 @@ from layers import *
 
 # data params
 time_steps = 35
-batch_size = 20
+batch_size = 32
 
 # models params
 layer_size = 650
@@ -18,9 +18,9 @@ init_range = 0.05
 # optimizer params
 learning_rate = 1
 decay_rate = 1 / 1.2
-decay_epoch = 4
+decay_epoch = 6
 max_norm = 5
-epochs = 20
+epochs = 50
 
 # data
 train_set = Text(ptb_train_path, batch_size, time_steps)
