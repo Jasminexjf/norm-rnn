@@ -63,23 +63,29 @@ def plot_saved_perplexity(file_names, model_names, save_file_name):
 
     for file_name, model_name in zip(file_names, model_names):
         with open(file_name) as save_file:
-            fit_results, val_results = cPickle.load(save_file)
-            fit_perplexity, fit_accuracy = zip(*fit_results)
-            val_perplexity, val_accuracy = zip(*val_results)
+            fit_perplexity, val_perplexity = cPickle.load(save_file)
+
+            train = []
+            for epoch in fit_perplexity:
+                train.extend(epoch)
+
+            valid = []
+            for epoch in val_perplexity:
+                valid.append(np.mean(epoch))
 
             color = colors.pop()
 
             # plot train results
             train_trace = Scatter(x=range(len(fit_perplexity)),
-                             y=fit_perplexity,
+                             y=train,
                              name='{} (Train)'.format(model_name),
                              line=Line(color=color, width=1))
 
-            step = len(fit_perplexity) / len(val_perplexity)
+            step = len(train) / len(valid)
 
             # plot valid results
-            valid_trace = Scatter(x=range(0, len(fit_perplexity), step),
-                             y=val_perplexity,
+            valid_trace = Scatter(x=range(0, len(train), step),
+                             y=valid,
                              name='{} (Valid)'.format(model_name),
                              line=Line(color=color, width=1, dash='dot'))
 
