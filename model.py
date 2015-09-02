@@ -48,7 +48,6 @@ class List(object):
 
         # compute metrics
         cost = CrossEntropy()(p, y)
-        accuracy = Accuracy()(p, y)
         perplexity = T.exp(cost)
 
         # get non-param updates (e.g. LSTM/BN state)
@@ -64,13 +63,13 @@ class List(object):
                   y: Y[i * dataset.batch_size:(i+1) * dataset.batch_size]}
 
         if optimizer is None:
-            return theano.function([i], (perplexity, accuracy), None, updates, givens)
+            return theano.function([i], perplexity, None, updates, givens)
         else:
             # link to pentree.py
             scaled_cost = cost * dataset.time_steps
             grads = [T.grad(scaled_cost, param) for param in self.params]
             updates.extend(optimizer(self.params, grads))
-            return theano.function([i], (perplexity, accuracy), None, updates, givens)
+            return theano.function([i], perplexity, None, updates, givens)
 
     def train(self, train_set, valid_set, test_set, optimizer, epochs):
         fit = self.compile(train_set, optimizer)
@@ -112,8 +111,11 @@ class List(object):
             for state in val_state:
                 state.set_value(state.get_value() * 0.)
 
+            self.fit_results.append(fit_results)
+            self.val_results.append(val_results)
 
-	    print
+
+            print
 
 
             # fit
@@ -137,8 +139,8 @@ class List(object):
                 state.set_value(state.get_value() * 0.)
 
 
-            self.fit_results.extend(fit_results)
-            self.val_results.extend(val_results)
+            self.fit_results.append(fit_results)
+            self.val_results.append(val_results)
             print
 
         # test
