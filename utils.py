@@ -68,6 +68,7 @@ def plot_saved_perplexity(file_names, model_names, save_file_name):
             train = []
             for epoch in fit_perplexity:
                 train.extend(epoch)
+            train = train[100:]
 
             valid = []
             for epoch in val_perplexity:
@@ -76,7 +77,7 @@ def plot_saved_perplexity(file_names, model_names, save_file_name):
             color = colors.pop()
 
             # plot train results
-            train_trace = Scatter(x=range(len(fit_perplexity)),
+            train_trace = Scatter(x=range(100, len(train) + 100),
                              y=train,
                              name='{} (Train)'.format(model_name),
                              line=Line(color=color, width=1))
@@ -84,7 +85,7 @@ def plot_saved_perplexity(file_names, model_names, save_file_name):
             step = len(train) / len(valid)
 
             # plot valid results
-            valid_trace = Scatter(x=range(0, len(train), step),
+            valid_trace = Scatter(x=range(step, len(train) + 1, step),
                              y=valid,
                              name='{} (Valid)'.format(model_name),
                              line=Line(color=color, width=1, dash='dot'))
