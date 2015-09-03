@@ -143,13 +143,21 @@ class List(object):
             self.val_results.append(val_results)
             print
 
-        # test
+        # static test
         test = self.compile(test_set)
         test_results = []
         for batch in range(test_set.batches):
             test_results.append(test(batch))
         import numpy as np
-        print 'pp({})'.format(np.mean(test_results))
+        print 'Static pp({})'.format(np.mean(test_results))
+
+        # dynamic test
+        test = self.compile(test_set, optimizer)
+        test_results = []
+        for batch in range(test_set.batches):
+            test_results.append(test(batch))
+        import numpy as np
+        print 'Dynamic pp({})'.format(np.mean(test_results))
 
     def dump(self, file_name):
         import cPickle
