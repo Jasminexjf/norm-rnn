@@ -177,6 +177,10 @@ class List(object):
             if isinstance(layer, LSTM):
                 layer.set_state(batch_size, time_steps)
 
+    def pickle(self):
+        import cPickle
+        with open('model.pkl', 'w') as pickle_file:
+            cPickle.dump(self, pickle_file)
     @property
     def params(self):
         params = []

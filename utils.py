@@ -106,6 +106,12 @@ def plot_saved_perplexity(file_names, model_names, save_file_name):
     print py.plot(data, filename='basic-line')
 
 
-plot_saved_perplexity(['ptb_small_ref_results.pkl', 'ptb_small_norm_results.pkl'],
-                      ['Without Batch Normalization', 'With Batch Normalization'],
-                      'results')
+#plot_saved_perplexity(['ptb_small_ref_results.pkl', 'ptb_small_norm_results.pkl'],
+#                      ['Without Batch Normalization', 'With Batch Normalization'],
+#                      'results')
+
+
+def unpickle_model(file_name):
+    import cPickle
+    with open(file_name) as pickle_file:
+        return cPickle.load(pickle_file)
