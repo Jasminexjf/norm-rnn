@@ -8,7 +8,7 @@ from layers import *
 
 # data params
 time_steps = 20
-batch_size = 20
+batch_size = 32
 
 # models params
 layer_size = 200
