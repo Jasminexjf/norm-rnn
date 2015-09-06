@@ -1,5 +1,8 @@
-import theano
 import numpy as np
+
+from model import List
+from layers import Embed, Softmax
+from optimizers import SGD
 
 batch_size = 2
 time_steps = 3
@@ -18,13 +21,19 @@ class Dataset(object):
 
 
 def test_train():
-    from model import List
-    from layers import Embed, Softmax
-    from optimizers import SGD
     model = List([Embed(input_size, layer_size),
                   Softmax()])
     model.train(Dataset(), Dataset(), SGD(), 10)
     model.dump('test.pkl')
 
 
-test_train()
+def test_pickle():
+    model = List([Embed(input_size, layer_size),
+              Softmax()])
+    model.pickle()
+
+    from utils import unpickle_model
+    unpickle_model('model.pkl')
+    
+
+test_pickle()
