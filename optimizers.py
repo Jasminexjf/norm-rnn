@@ -46,9 +46,10 @@ class SGD(object):
     def __call__(self, params, grads):
         grads = self.grad(grads)
 
-        updates = [(self.iteration, self.iteration + 1),
-                   # this update is wrong (we want decay after)
-                   (self.lr, T.switch(self.iteration % self.decay.every, self.lr, self.lr * self.decay.rate))]
+        updates = [(self.iteration, self.iteration + 1)]
+
+        if self.decay is not None:
+            updates.append((self.lr, T.switch(self.iteration % self.decay.every, self.lr, self.lr * self.decay.rate)))
 
         for p, g in zip(params, grads):
             new_p = p - self.lr * g

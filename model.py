@@ -65,6 +65,8 @@ class List(object):
         if optimizer is None:
             return theano.function([i], perplexity, None, updates, givens)
         else:
+            self.optimizer = optimizer
+
             # link to pentree.py
             scaled_cost = cost * dataset.time_steps
             grads = [T.grad(scaled_cost, param) for param in self.params]
@@ -114,9 +116,7 @@ class List(object):
             self.fit_results.append(fit_results)
             self.val_results.append(val_results)
 
-
             print
-
 
             # fit
             fit_results = []
@@ -141,7 +141,12 @@ class List(object):
 
             self.fit_results.append(fit_results)
             self.val_results.append(val_results)
-            print
+
+            if epoch >= self.decay_epoch:
+                self.optimizer.lr.set_value(self.optimizer.get_value() * self.decay_rate)
+
+            print 'lr', self.optimizer.lr.get_value()
+
 
         # static test
         test = self.compile(test_set)
