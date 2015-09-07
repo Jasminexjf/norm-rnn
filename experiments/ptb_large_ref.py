@@ -44,6 +44,9 @@ model = List([
     Linear(layer_size, vocab_size, weight_init=weight_init)
 ])
 
+model.decay_epoch = decay_epoch
+model.decay_rate = decay_rate
+
 # optimizer
 grad = MaxNorm(max_norm)
 decay = DecayEvery(decay_epoch * train_set.batches, decay_rate)
