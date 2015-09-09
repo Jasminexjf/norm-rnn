@@ -77,4 +77,15 @@ def test_bn_lstm():
     assert f(X).shape == (batch_size, time_steps, layer_size)
 
 
-test_bn_lstm()
+def test_dropout():
+    from layers import Dropout
+    dropout = Dropout(0.5)
+
+    x = T.tensor3()
+    f = theano.function([x], dropout(x))
+
+    X = np.ones((batch_size, time_steps, input_size))
+    assert f(X).shape == (batch_size, time_steps, input_size)
+
+
+test_dropout()
