@@ -69,6 +69,10 @@ class List(object):
 
             # link to pentree.py
             scaled_cost = cost * dataset.time_steps
+
+            # l2 regularization
+            scaled_cost += [T.sum(p ** 2) * 0.00005 for p in self.params]
+
             grads = [T.grad(scaled_cost, param) for param in self.params]
             updates.extend(optimizer(self.params, grads))
             return theano.function([i], perplexity, None, updates, givens)
