@@ -142,8 +142,9 @@ class List(object):
             self.fit_results.append(fit_results)
             self.val_results.append(val_results)
 
-            if epoch >= self.decay_epoch:
-                self.optimizer.lr.set_value(self.optimizer.get_value() * self.decay_rate)
+            import numpy as np
+	    if epoch >= self.decay_epoch:
+                self.optimizer.lr.set_value(np.cast[np.float32](self.optimizer.lr.get_value() * self.decay_rate))
 
             print 'lr', self.optimizer.lr.get_value()
 
