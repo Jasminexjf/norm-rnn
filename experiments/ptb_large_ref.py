@@ -49,10 +49,10 @@ model.decay_rate = decay_rate
 
 # optimizer
 grad = MaxNorm(max_norm)
-decay = DecayEvery(decay_epoch * train_set.batches, decay_rate)
-optimizer = SGD(learning_rate, grad, decay)
+#decay = DecayEvery(decay_epoch * train_set.batches, decay_rate)
+optimizer = SGD(learning_rate, grad, decay=None)
 
 
 if __name__ == '__main__':
     model.train(train_set, valid_set, test_set, optimizer, epochs)
-    model.dump('ptb_medium_ref_results.pkl')
+    model.dump('ptb_large_ref_results.pkl')

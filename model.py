@@ -71,7 +71,7 @@ class List(object):
             scaled_cost = cost * dataset.time_steps
 
             # l2 regularization
-            scaled_cost += [T.sum(p ** 2) * 0.00005 for p in self.params]
+            #scaled_cost += sum([T.sum(p ** 2) * 0.00005 for p in self.params])
 
             grads = [T.grad(scaled_cost, param) for param in self.params]
             updates.extend(optimizer(self.params, grads))
@@ -160,6 +160,9 @@ class List(object):
             test_results.append(test(batch))
         import numpy as np
         print 'Static pp({})'.format(np.mean(test_results))
+
+	# reset learning rate
+        self.optimizer.lr.set_value(np.cast[np.float32](1.0))
 
         # dynamic test
         test = self.compile(test_set, optimizer)

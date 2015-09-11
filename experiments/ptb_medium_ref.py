@@ -20,7 +20,7 @@ learning_rate = 1
 decay_rate = 1 / 1.2
 decay_epoch = 6
 max_norm = 5
-epochs = 50
+epochs = 39
 
 # data
 train_set = Text(ptb_train_path, batch_size, time_steps)
@@ -49,9 +49,7 @@ model.decay_rate = decay_rate
 
 # optimizer
 grad = MaxNorm(max_norm)
-#decay = DecayEvery(decay_epoch * train_set.batches, decay_rate)
-decay = None
-optimizer = SGD(learning_rate, grad, decay)
+optimizer = SGD(learning_rate, grad, decay=None)
 
 
 if __name__ == '__main__':

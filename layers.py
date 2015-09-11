@@ -98,10 +98,19 @@ class Dropout(object):
         self.train = True
 
     def __call__(self, x):
-        if self.train:
-            return x * self.srng.binomial(x.shape, p=1-self.p, dtype=theano.config.floatX)
-        else:
-            return x * (1 - self.p)
+        #if self.train:
+        #    return x * self.srng.binomial(x.shape, p=1-self.p, dtype=theano.config.floatX)
+        #else:
+        #    return x * (1 - self.p)
+        
+	# test dropout on valid
+	#return x * self.srng.binomial(x.shape, p=1-self.p, dtype=theano.config.floatX) / (1 - self.p)
+
+	# scale during training
+	if self.train:
+	    return x * self.srng.binomial(x.shape, p=1-self.p, dtype=theano.config.floatX) / (1 - self.p)
+	else:
+	    return x
 
 
 class LSTM(object):
