@@ -20,7 +20,7 @@ learning_rate = 1
 decay_rate = 1 / 1.15
 decay_epoch = 14
 max_norm = 10
-epochs = 60
+epochs = 55
 
 # data
 train_set = Text(ptb_train_path, batch_size, time_steps)
