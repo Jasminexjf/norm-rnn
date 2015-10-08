@@ -1,16 +1,8 @@
-## Normalized Recurrent Neural Networks
+#### Batch Normalized Recurrent Neural Networks
 
-#### Abstract
+Theano code for the Penn Treebank language model experiments in the paper [Batch Normalized Recurrent Neural Networks](http://arxiv.org/abs/1510.01378). The baseline LSTMs reproduce the results from the paper [Recurrent Neural Network Regularization](http://arxiv.org/pdf/1409.2329v4.pdf).
 
-Theano implementation of Normalized Recurrent Neural Networks (link to paper).
-
-| Model  | Valid PP  | Test PP | Iterations | Iterations (BN) |
-| :----- | :-------: | :-----: | ---------: | --------------: |
-| Small  | 120  	 | 114 	   | 10K 		| 5K			  |
-| Medium | 86  	 	 | 82 	   | 30K 		| 10K			  |
-| Large  | 82  	 	 | 78 	   | 40K 		| 15K			  |
-
-(The numbers in the table are just place holders)
+The name of the repo is, of course, based off of Karpathy's [char-rnn](https://github.com/karpathy/char-rnn).  
 
 #### Requirements
 
